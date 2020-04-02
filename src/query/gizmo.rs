@@ -171,7 +171,7 @@ impl Path {
     ///////////////
     
     ///////////////////////////
-    // Is(nodes: String[])
+    // Is(nodes: String[]) *
     ///////////////////////////
     pub fn is<V: Into<Values>>(&mut self, nodes: V) -> Path {
         self.path.is(nodes.into().to_vec());
@@ -179,7 +179,7 @@ impl Path {
     }
 
     ///////////////////////////
-    // In(values: String[], tags: String[])
+    // In(values: String[], tags: String[]) *
     ///////////////////////////
     pub fn r#in<V: Into<path::Via>, T: Into<Tags>>(&mut self, via: V, tags: T) -> Path {
         self.path.in_with_tags(tags.into().to_vec(), via.into());
@@ -187,7 +187,7 @@ impl Path {
     }
 
     ///////////////////////////
-    // Out(values: String[], tags: String[])
+    // Out(values: String[], tags: String[]) *
     ///////////////////////////
     pub fn out<V: Into<path::Via>, T: Into<Tags>>(&mut self, via: V, tags: T) -> Path {
         self.path.out_with_tags(tags.into().to_vec(), via.into());
@@ -195,7 +195,7 @@ impl Path {
     }
 
     ///////////////////////////
-    // Both(values: String[], tags: String[])
+    // Both(values: String[], tags: String[]) *
     ///////////////////////////
     pub fn both<V: Into<path::Via>, T: Into<Tags>>(&mut self, via: V, tags: T) -> Path {
         self.path.both_with_tags(tags.into().to_vec(), via.into());
@@ -203,7 +203,7 @@ impl Path {
     }
 
     ///////////////////////////
-    // Follow(path: Path)
+    // Follow(path: Path) *
     ///////////////////////////
     pub fn follow(&mut self, ep: &Path) -> Path {
         self.path.follow(ep.path.clone());
@@ -212,32 +212,20 @@ impl Path {
 
 
     ///////////////////////////
-    // FollowR(path: Path)
+    // FollowR(path: Path) *
     ///////////////////////////
-    pub fn follow_r(&mut self, ep: &Path) -> Path {
+    pub fn follow_r(&mut self, ep: &Path) -> Path { 
         self.path.follow_reverse(ep.path.clone());
         self.clone()
     }
 
 
     ///////////////////////////
-    // FollowRecursive(path: Path, maxDepth: int, tags: Stringp[])
+    // FollowRecursive(path: Path, maxDepth: int, tags: Stringp[]) -
     ///////////////////////////
-    pub fn follow_recursive_path<T: Into<Tags>>(&mut self, path: &Path, max_depth: Option<i32>, tags: T) -> Path {
-        let via = path.into();
+    pub fn follow_recursive<T: Into<Tags>, V: Into<path::Via>>(&mut self, via: V, tags: T, max_depth: Option<i32>) -> Path {
         let max_depth = match max_depth { Some(d) => d, None => 50 };
-        self.path.follow_recursive(via, max_depth, tags.into().to_vec());
-        self.clone()
-    }
-
-
-    ///////////////////////////
-    // FollowRecursive(value: String, maxDepth: int, tags: Stringp[])
-    ///////////////////////////
-    pub fn follow_recursive_value<T: Into<Tags>>(&mut self, value: Value, max_depth: Option<i32>, tags: T) -> Path {
-        let via = path::Via::Values(vec![value]);
-        let max_depth = match max_depth { Some(d) => d, None => 50 };
-        self.path.follow_recursive(via, max_depth, tags.into().to_vec());
+        self.path.follow_recursive(via.into(), max_depth, tags.into().to_vec());
         self.clone()
     }
 

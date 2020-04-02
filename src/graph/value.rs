@@ -1,16 +1,12 @@
 use std::hash::{Hash, Hasher};
-use ordered_float::OrderedFloat;
-use serde_json::value::Number;
 
 use std::borrow::Cow;
 use std::fmt;
 
-// use wasm_bindgen::JsValue;
-
+use super::number::Number;
 
 
 #[derive(Debug, PartialEq, Clone)]
-#[derive(Serialize, Deserialize)]
 pub enum Value {
     None,
     Null,
@@ -72,16 +68,8 @@ impl Hash for Value {
             "Value::Bool".hash(state);
             b.hash(state);
         } else if let Value::Number(n) = self {
-            if n.is_f64() {
-                "Value::Number::f64".hash(state);
-                OrderedFloat::from(n.as_f64().unwrap()).hash(state);
-            } else if n.is_i64() {
-                "Value::Number::i64".hash(state);
-                n.as_i64().hash(state);
-            } else if n.is_u64() {
-                "Value::Number::u64".hash(state);
-                n.as_u64().hash(state);
-            }
+            "Value::Number".hash(state);
+            n.hash(state);
         } else if let Value::String(s) = self {
             "Value::String".hash(state);
             s.hash(state);
@@ -108,12 +96,6 @@ from_integer! {
     u8 u16 u32 u64 usize
 }
 
-#[cfg(feature = "arbitrary_precision")]
-serde_if_integer128! {
-    from_integer! {
-        i128 u128
-    }
-}
 
 impl From<f32> for Value {
     /// Convert 32-bit floating point number to `Value`

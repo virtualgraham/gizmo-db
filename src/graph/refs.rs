@@ -1,4 +1,4 @@
-use serde_json::value::Number;
+use super::number::Number;
 use super::value::Value;
 use super::quad::Quad;
 

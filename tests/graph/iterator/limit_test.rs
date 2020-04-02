@@ -1,7 +1,7 @@
-use gizmo_graph_db::graph::iterator::fixed::{Fixed};
-use gizmo_graph_db::graph::iterator::limit::{Limit};
-use gizmo_graph_db::graph::iterator::{Shape};
-use gizmo_graph_db::graph::refs::{Ref};
+use gizmo_db::graph::iterator::fixed::{Fixed};
+use gizmo_db::graph::iterator::limit::{Limit};
+use gizmo_db::graph::iterator::{Shape};
+use gizmo_db::graph::refs::{Ref};
 use super::common;
 
 

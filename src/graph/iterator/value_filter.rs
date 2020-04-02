@@ -6,7 +6,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::fmt;
 use super::super::quad::QuadStore;
-use serde_json::value::Number;
+use super::super::number::Number;
 use regex::Regex;
 
 

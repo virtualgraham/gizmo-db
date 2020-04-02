@@ -1,9 +1,9 @@
-use gizmo_graph_db::graph::iterator::fixed::{Fixed};
-use gizmo_graph_db::graph::iterator::count::{Count};
-use gizmo_graph_db::graph::iterator::and::{And};
-use gizmo_graph_db::graph::iterator::{Shape};
-use gizmo_graph_db::graph::refs::{pre_fetched};
-use gizmo_graph_db::graph::value::{Value};
+use gizmo_db::graph::iterator::fixed::{Fixed};
+use gizmo_db::graph::iterator::count::{Count};
+use gizmo_db::graph::iterator::and::{And};
+use gizmo_db::graph::iterator::{Shape};
+use gizmo_db::graph::refs::{pre_fetched};
+use gizmo_db::graph::value::{Value};
 
 
 #[test]

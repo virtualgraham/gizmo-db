@@ -1,7 +1,7 @@
-use gizmo_graph_db::query::gizmo;
-use gizmo_graph_db::graph::quad::Quad;
+use gizmo_db::query::gizmo;
+use gizmo_db::graph::quad::Quad;
 
-use gizmo_graph_db::graph::value::Value;
+use gizmo_db::graph::value::Value;
 use std::collections::HashMap;
 
 fn sort_and_compare(a:&mut Vec<String>, b:&mut Vec<String>) -> bool {

@@ -4,8 +4,7 @@ mod graph;
 use query::gizmo;
 use graph::quad::Quad;
 
-#[macro_use]
-extern crate serde_derive;
+
 
 
 use graph::value::Value;

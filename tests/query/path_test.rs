@@ -1,8 +1,8 @@
-use gizmo_graph_db::query::path::*;
-use gizmo_graph_db::graph::iterator::iterate::EachIterator;
-use gizmo_graph_db::graph::quad::{QuadStore, Quad, QuadWriter, IgnoreOptions};
-use gizmo_graph_db::graph::value::Value;
-use gizmo_graph_db::graph::memstore::quadstore::MemStore;
+use gizmo_db::query::path::*;
+use gizmo_db::graph::iterator::iterate::EachIterator;
+use gizmo_db::graph::quad::{QuadStore, Quad, QuadWriter, IgnoreOptions};
+use gizmo_db::graph::value::Value;
+use gizmo_db::graph::memstore::quadstore::MemStore;
 
 use std::rc::Rc;
 use std::cell::RefCell;

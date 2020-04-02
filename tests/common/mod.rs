@@ -1,9 +1,9 @@
-use gizmo_graph_db::graph::iterator::fixed::{Fixed};
+use gizmo_db::graph::iterator::fixed::{Fixed};
 use std::rc::Rc;
 use std::cell::RefCell;
-use gizmo_graph_db::graph::iterator::{Shape, Scanner, Index, Costs, Base, ShapeType};
-use gizmo_graph_db::graph::refs;
-use gizmo_graph_db::graph::value::Value;
+use gizmo_db::graph::iterator::{Shape, Scanner, Index, Costs, Base, ShapeType};
+use gizmo_db::graph::refs;
+use gizmo_db::graph::value::Value;
 use std::collections::HashMap;
 use std::fmt;
 

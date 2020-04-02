@@ -1,10 +1,10 @@
-use gizmo_graph_db::graph::iterator::fixed::{Fixed};
-use gizmo_graph_db::graph::iterator::{Shape};
-use gizmo_graph_db::graph::refs::{Namer};
-use gizmo_graph_db::graph::value::{Value};
-use gizmo_graph_db::graph::quad::{Quad, QuadStore, Direction};
-use gizmo_graph_db::graph::linksto::{LinksTo};
-use gizmo_graph_db::graph::graphmock::{Store};
+use gizmo_db::graph::iterator::fixed::{Fixed};
+use gizmo_db::graph::iterator::{Shape};
+use gizmo_db::graph::refs::{Namer};
+use gizmo_db::graph::value::{Value};
+use gizmo_db::graph::quad::{Quad, QuadStore, Direction};
+use gizmo_db::graph::linksto::{LinksTo};
+use gizmo_db::graph::graphmock::{Store};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashSet;

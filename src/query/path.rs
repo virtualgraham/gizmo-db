@@ -304,7 +304,12 @@ impl From<Value> for Via {
 
 impl From<Vec<Value>> for Via {
     fn from(v: Vec<Value>) -> Self {
-        Via::Values(v)
+        if v.is_empty() {
+            Via::None
+        } else {
+            Via::Values(v)
+        }
+       
     }
 }
 
