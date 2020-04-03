@@ -416,7 +416,6 @@ impl Scanner for AndNext {
 
 
 struct AndContains {
-    base: Option<Rc<RefCell<dyn Shape>>>,
     sub: Vec<Rc<RefCell<dyn Index>>>,
     opt: Vec<Rc<RefCell<dyn Index>>>,
     opt_check: HashMap<usize, bool>,
@@ -429,9 +428,8 @@ struct AndContains {
 impl AndContains {
     fn new(sub: Vec<Rc<RefCell<dyn Index>>>, opt: Vec<Rc<RefCell<dyn Index>>>) -> Rc<RefCell<AndContains>> {
         Rc::new(RefCell::new(AndContains {
-            base: None,
-            sub: sub.iter().map(|s| s.clone()).collect(),
-            opt: opt.iter().map(|s| s.clone()).collect(),
+            sub,
+            opt,
             opt_check: HashMap::new(),
             result: None,
             err: None
@@ -453,9 +451,15 @@ impl Base for AndContains {
             sub.borrow().tag_results(dst);
         }
         for (i, sub) in self.opt.iter().enumerate() {
-            if !self.opt_check.contains_key(&i) {
+            if let Some(opt) = self.opt_check.get(&i) {
+                if !opt { 
+                    println!("AndContains tag_results opt_check !opt continue");
+                    continue 
+                }
+            } else {
+                println!("AndContains tag_results opt_check None continue");
                 continue
-            } 
+            }
             sub.borrow().tag_results(dst);
         }
     }
@@ -482,9 +486,17 @@ impl Base for AndContains {
         }
         for (i, _sub) in self.opt.iter().enumerate() {
             let mut sub = _sub.borrow_mut();
-            if !self.opt_check.contains_key(&i) {
+
+            if let Some(opt) = self.opt_check.get(&i) {
+                if !opt { 
+                    println!("AndContains next_path opt_check !opt continue");
+                    continue 
+                }
+            } else {
+                println!("AndContains next_path opt_check None continue");
                 continue
             }
+
             if sub.next_path() {
                 return true
             }
@@ -567,6 +579,7 @@ impl Index for AndContains {
         }
         self.result = Some(val.clone());
         for (i, sub) in self.opt.iter().enumerate() {
+            println!("AndContains self.opt_check.insert {:?} {:?} {:?}", i, val, sub.borrow_mut().contains(val));
             self.opt_check.insert(i, sub.borrow_mut().contains(val));
         }
         true

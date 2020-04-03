@@ -40,11 +40,17 @@ impl BaseIterator {
     }
 
     fn next_path(&mut self) -> bool {
-        let ok = self.it.as_ref().unwrap().borrow_mut().next_path();
-        if ok {
-            self.n += 1;
+        if let Some(it) = self.it.as_ref() {
+            let ok = it.borrow_mut().next_path();
+            if ok {
+                self.n += 1;
+            }
+            return ok
+        } else {
+            println!("BaseIterator.it is None");
+            return false;
         }
-        return ok
+
     }
 }
 

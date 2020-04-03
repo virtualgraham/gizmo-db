@@ -100,6 +100,7 @@ impl Graph {
         }
     }
 
+    // vertex
     pub fn v<V: Into<Values>>(&self, qv: V) -> Path {
         Path::new(
             self.session.clone(), 
@@ -113,6 +114,7 @@ impl Graph {
         )
     }
 
+    // morphism
     pub fn m(&self) -> Path {
         Path::new(self.session.clone(), false, path::Path::start_morphism(Vec::new()))
     }
@@ -224,8 +226,14 @@ impl Path {
     // FollowRecursive(path: Path, maxDepth: int, tags: Stringp[]) -
     ///////////////////////////
     pub fn follow_recursive<T: Into<Tags>, V: Into<path::Via>>(&mut self, via: V, tags: T, max_depth: Option<i32>) -> Path {
+        let via = via.into();
+        match &via {
+            path::Via::None => panic!("expected predicate list"),
+            path::Via::Values(v) => if v.len() != 1 { panic!("expected one predicate or path for recursive follow") } 
+            _ => ()
+        }
         let max_depth = match max_depth { Some(d) => d, None => 50 };
-        self.path.follow_recursive(via.into(), max_depth, tags.into().to_vec());
+        self.path.follow_recursive(via, max_depth, tags.into().to_vec());
         self.clone()
     }
 
@@ -384,6 +392,13 @@ impl Path {
     }
 
     ///////////////////////////
+    // Difference(path: Path) 
+    ///////////////////////////
+    pub fn difference(&mut self, path: &Path) -> Path {
+        self.except(path)
+    }
+
+    ///////////////////////////
     // Unique()
     ///////////////////////////
     pub fn unique(&mut self) -> Path {
@@ -391,12 +406,7 @@ impl Path {
         self.clone()
     }
 
-    ///////////////////////////
-    // Difference(path: Path)
-    ///////////////////////////
-    pub fn difference(&mut self, path: &Path) -> Path {
-        self.clone()
-    }
+
 
     ///////////////////////////
     // Labels()

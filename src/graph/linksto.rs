@@ -266,6 +266,7 @@ impl Base for LinksToContains {
 
 impl Index for LinksToContains {
     fn contains(&mut self, val:&Ref) -> bool {
+        println!("LinksToContains {:?} {:?}", val, &self.dir);
         let node = self.qs.borrow().quad_direction(val, &self.dir);
         match node {
             Some(n) => {

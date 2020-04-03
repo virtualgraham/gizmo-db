@@ -112,6 +112,33 @@ pub enum ShapeType<'a> {
 }
 
 
+impl<'a> fmt::Display for ShapeType<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ShapeType::And => write!(f, "And"),
+            ShapeType::Count => write!(f, "Count"),
+            ShapeType::Error => write!(f, "Error"),
+            ShapeType::Fixed(_) => write!(f, "Fixed"),
+            ShapeType::HasA => write!(f, "HasA"),
+            ShapeType::Int64 => write!(f, "Int64"),
+            ShapeType::Limit => write!(f, "Limit"),
+            ShapeType::LinksTo => write!(f, "LinksTo"),
+            ShapeType::Materialize => write!(f, "Materialize"),
+            ShapeType::Not => write!(f, "Not"),
+            ShapeType::Null => write!(f, "Null"),
+            ShapeType::Or => write!(f, "Or"),
+            ShapeType::Recursive => write!(f, "Recursive"),
+            ShapeType::Resolver => write!(f, "Resolver"),
+            ShapeType::Save(_) => write!(f, "Save"),
+            ShapeType::Skip => write!(f, "Skip"),
+            ShapeType::Sort => write!(f, "Sort"),
+            ShapeType::Test => write!(f, "Test"),
+            ShapeType::Unique => write!(f, "Unique"),
+            ShapeType::ValueFilter => write!(f, "ValueFilter"),
+            ShapeType::MemStoreIterator => write!(f, "MemStoreIterator"),
+        }
+    }
+}
 
 pub trait Shape : fmt::Display {
     fn iterate(&self) -> Rc<RefCell<dyn Scanner>>;

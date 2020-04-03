@@ -86,4 +86,20 @@ fn path_tests() {
     expect.sort();
 
     assert_eq!(got, expect);
+
+    //////////////////
+    // Except to filter out a single vertex"
+    //////////////////
+
+    // let path = Path::start_path(Some(qs.clone()), vec![Value::from("<bob>")]);
+    // let mut got = run_top_level(qs.clone(), &path, false);
+    // let mut expect = vec![
+    //     "<fred>".to_string(),
+    //     "cool_person".to_string()
+    // ];
+
+    // got.sort();
+    // expect.sort();
+
+    // assert_eq!(got, expect);
 }

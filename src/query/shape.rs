@@ -58,7 +58,7 @@ impl<'a> fmt::Display for ShapeType<'a> {
 
 
 pub trait Shape {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>>;
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>>;
     fn optimize(&mut self, o: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>>;
     fn shape_type(&mut self) -> ShapeType;
 }
@@ -131,13 +131,13 @@ impl Lookup {
 }
 
 impl Shape for Lookup {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         println!("Lookup build_iterator()"); 
         let f = self.resolve(qs.clone());
         if f.is_none() {
             return iterator::Null::new();
         }
-        return f.unwrap().borrow().build_iterator(qs)
+        return f.unwrap().borrow_mut().build_iterator(qs)
     }
 
     fn optimize(&mut self, o: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
@@ -176,7 +176,7 @@ impl Fixed {
 }
 
 impl Shape for Fixed {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         let it = iterator::fixed::Fixed::new(vec![]);
         for v in &self.0 {
             if let Content::Quad(_) = v.content {
@@ -215,7 +215,7 @@ impl Null {
 }
 
 impl Shape for Null {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         return iterator::Null::new();
     }
 
@@ -245,7 +245,7 @@ impl AllNodes {
 
 
 impl Shape for AllNodes {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         qs.borrow().nodes_all_iterator()
     }
 
@@ -275,13 +275,13 @@ impl Intersect {
 
 
 impl Shape for Intersect {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if self.0.is_empty() {
             return iterator::Null::new()
         }
         let mut sub = Vec::new();
         for c in &self.0 {
-            sub.push(c.borrow().build_iterator(qs.clone()));
+            sub.push(c.borrow_mut().build_iterator(qs.clone()));
         }
         if sub.len() == 1 {
             return sub[0].clone()
@@ -336,11 +336,11 @@ impl NodesFrom {
 }
 
 impl Shape for NodesFrom {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if let ShapeType::Null = self.quads.borrow_mut().shape_type() {
             return iterator::Null::new() 
         }
-        let sub = self.quads.borrow().build_iterator(qs.clone());
+        let sub = self.quads.borrow_mut().build_iterator(qs.clone());
 
         return HasA::new(qs.clone(), sub, self.dir.clone())
     }
@@ -381,7 +381,7 @@ impl QuadFilter {
 }
 
 impl Shape for QuadFilter {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         println!("Quad Filter build_iterator()");
 
         if self.values.is_none() {
@@ -394,7 +394,7 @@ impl Shape for QuadFilter {
             return qs.borrow().quad_iterator(&self.dir, &v)
         }
 
-        let sub = self.values.clone().unwrap().borrow().build_iterator(qs.clone());
+        let sub = self.values.clone().unwrap().borrow_mut().build_iterator(qs.clone());
 
         println!("Quad Filter LinksTo::new(qs.clone(), sub, self.dir.clone())");
 
@@ -428,7 +428,7 @@ impl Quads {
 }
 
 impl Shape for Quads {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         println!("Quads build_iterator() {:?} self.0.len()", self.0.len());
 
         if self.0.is_empty() {
@@ -437,7 +437,7 @@ impl Shape for Quads {
 
         let mut its:Vec<Rc<RefCell<dyn iterator::Shape>>> = Vec::new();
 
-        for f in &self.0 {
+        for f in &mut self.0 {
             its.push(f.build_iterator(qs.clone()));
         }
 
@@ -476,12 +476,12 @@ impl Save {
 }
 
 impl Shape for Save {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if let None = self.from {
             return iterator::Null::new() 
         }
 
-        let it = self.from.as_ref().unwrap().borrow().build_iterator(qs.clone());
+        let it = self.from.as_ref().unwrap().borrow_mut().build_iterator(qs.clone());
         if !self.tags.is_empty() {
             return iterator::save::Save::new(it, self.tags.clone())
         }
@@ -504,7 +504,7 @@ impl Shape for Save {
 pub struct Union(pub Vec<Rc<RefCell<dyn Shape>>>);
 
 impl Shape for Union {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if self.0.is_empty() {
             return iterator::Null::new() 
         }
@@ -512,7 +512,7 @@ impl Shape for Union {
         let mut sub = Vec::new();
         
         for c in &self.0 {
-            sub.push(c.borrow().build_iterator(qs.clone()));
+            sub.push(c.borrow_mut().build_iterator(qs.clone()));
         }
         
         if sub.len() == 1 {
@@ -540,8 +540,8 @@ pub struct Unique {
 }
 
 impl Shape for Unique {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-       let it = self.from.borrow().build_iterator(qs);
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+       let it = self.from.borrow_mut().build_iterator(qs);
        return iterator::unique::Unique::new(it);
     }
 
@@ -566,9 +566,20 @@ pub struct Recursive {
     tags: Vec<String>
 }
 
+impl Recursive {
+    pub fn new(path: path::Path, r#in: Rc<RefCell<dyn Shape>>, max_depth: i32, tags: Vec<String>) -> Rc<RefCell<Recursive>> {
+        Rc::new(RefCell::new(Recursive {
+            path,
+            r#in,
+            max_depth, 
+            tags
+        }))
+    }
+}
+
 impl Shape for Recursive {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        let r#in = self.r#in.borrow().build_iterator(qs.clone());
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+        let r#in = self.r#in.borrow_mut().build_iterator(qs.clone());
         let it = iterator::recursive::Recursive::new(r#in, path::MorphismForPath::new(self.path.clone(), qs.clone()), self.max_depth);
         for s in &self.tags {
             it.borrow_mut().add_depth_tag(s.clone());
@@ -588,14 +599,18 @@ impl Shape for Recursive {
 ///////////////////////////////////////////////
 #[derive(Clone)]
 pub struct IteratorShape {
-    pub it: Rc<RefCell<dyn iterator::Shape>>,
-    pub sent: bool
+    pub it: Option<Rc<RefCell<dyn iterator::Shape>>>,
 }
 
 impl Shape for IteratorShape {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        // TODO: Implement
-        return iterator::Null::new()
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+        return if self.it.is_some() {
+            let it = self.it.as_ref().unwrap().clone();
+            self.it = None;
+            it
+        } else {
+            iterator::Error::new("iterator not set".into())
+        }
     }
 
     fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
@@ -627,19 +642,17 @@ impl IntersectOpt {
 }
 
 impl Shape for IntersectOpt {
-    fn build_iterator(& self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        let self_sub = if self.sub.0.is_empty() {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+        if self.sub.0.is_empty() {
             if self.opt.is_empty() {
                 println!("IntersectOpt build_iterator opt.is_empty");
                 return iterator::Null::new() 
             }
-            Intersect(vec![AllNodes::new()])
-        } else {
-            self.sub.clone()
-        };
+            self.sub = Intersect(vec![AllNodes::new()])
+        }
 
-        let sub:Vec<Rc<RefCell<dyn iterator::Shape>>> = self_sub.0.iter().map(|s| s.borrow().build_iterator(qs.clone())).collect();
-        let opt:Vec<Rc<RefCell<dyn iterator::Shape>>> = self.opt.iter().map(|s| s.borrow().build_iterator(qs.clone())).collect();
+        let sub:Vec<Rc<RefCell<dyn iterator::Shape>>> = self.sub.0.iter().map(|s| s.borrow_mut().build_iterator(qs.clone())).collect();
+        let opt:Vec<Rc<RefCell<dyn iterator::Shape>>> = self.opt.iter().map(|s| s.borrow_mut().build_iterator(qs.clone())).collect();
 
         println!("IntersectOpt sub.len() {} opt.len() {}", sub.len(), opt.len());
 
@@ -651,6 +664,7 @@ impl Shape for IntersectOpt {
         let it = iterator::and::And::new(sub);
         
         for sit in opt {
+            println!("IntersectOpt add_optional_iterator {:?}", sit.borrow_mut().shape_type().to_string());
             it.borrow_mut().add_optional_iterator(sit);
         }
 
@@ -679,14 +693,14 @@ pub struct Except {
 }
 
 impl Shape for Except {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         let all = match &self.from {
-            Some(f) => f.borrow().build_iterator(qs.clone()),
+            Some(f) => f.borrow_mut().build_iterator(qs.clone()),
             None => qs.borrow().nodes_all_iterator()
         };
 
         return match &self.exclude {
-            Some(e) => iterator::not::Not::new(e.borrow().build_iterator(qs.clone()), all),
+            Some(e) => iterator::not::Not::new(e.borrow_mut().build_iterator(qs.clone()), all),
             None => all
         }
     }
@@ -712,7 +726,7 @@ pub struct Page {
 }
 
 impl Shape for Page {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if let ShapeType::Null = self.from.borrow_mut().shape_type() {
             return iterator::Null::new() 
         }
@@ -748,7 +762,7 @@ pub struct Sort {
 }
 
 impl Shape for Sort {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if let ShapeType::Null = self.from.borrow_mut().shape_type() {
             return iterator::Null::new() 
         }
@@ -907,8 +921,8 @@ impl Filter {
 }
 
 impl Shape for Filter {
-    fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        let mut it = self.from.borrow().build_iterator(qs.clone());
+    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+        let mut it = self.from.borrow_mut().build_iterator(qs.clone());
         for f in &self.filters {
             it = f.build_iterator(qs.clone(), it)
         }
@@ -1002,7 +1016,7 @@ fn optimize(qs: Rc<RefCell<dyn QuadStore>>, shape:Rc<RefCell<dyn Shape>>) -> Opt
 pub fn build_iterator(qs: Rc<RefCell<dyn QuadStore>>, shape:Rc<RefCell<dyn Shape>>) -> Rc<RefCell<dyn iterator::Shape>>{
     let s = optimize(qs.clone(), shape.clone());
     let s = match s { Some(new_s) => new_s, None => shape.clone() };
-    let a = s.borrow();
+    let mut a = s.borrow_mut();
     a.build_iterator(qs.clone())
 }
 

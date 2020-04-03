@@ -139,19 +139,25 @@ impl RecursiveNext {
 
         if let Some(k) = val.key() {
 
-            let mut at = self.seen.get(k).unwrap();
+            if let Some(at) = self.seen.get(k) {
 
-            while at.depth != 1 {
-                if at.depth == 0 {
-                    panic!("seen chain is broken");
+                let mut at = at;
+
+                while at.depth != 1 {
+                    if at.depth == 0 {
+                        panic!("seen chain is broken");
+                    }
+                    
+                    let v = &at.val.as_ref().unwrap().key().unwrap(); // TODO: FIX THIS
+                    at = self.seen.get(v).unwrap();
+    
                 }
+    
+                return at.val.as_ref().unwrap().clone() // TODO: FIX THIS
                 
-                let v = &at.val.as_ref().unwrap().key().unwrap(); // TODO: FIX THIS
-                at = self.seen.get(v).unwrap();
-
+            } else {
+                panic!("trying to getBaseValue of something unseen");
             }
-
-            return at.val.as_ref().unwrap().clone() // TODO: FIX THIS
 
         } else {
             return refs::Ref::none()
@@ -201,11 +207,18 @@ impl Base for RecursiveNext {
 
     #[allow(unused)]
     fn next_path(&mut self) -> bool {
-        let key = &self.contains_value.as_ref().unwrap().key();
-        if key.is_none() { return false }
+        let key = if let Some(ky) = self.contains_value.as_ref() {
+            if let Some(k) = ky.key() {
+                k 
+            } else {
+                return false
+            }
+        } else {
+            return false
+        };
 
         let a = self.path_index + 1;
-        let b = self.path_map.get(key.as_ref().unwrap()).unwrap().len();
+        let b = self.path_map.get(key).unwrap().len();
         if a >= b {
             return false
         }

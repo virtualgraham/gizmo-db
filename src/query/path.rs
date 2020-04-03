@@ -84,7 +84,11 @@ impl Path {
 
     pub fn follow_recursive(&mut self, via: Via, max_depth: i32, tags: Vec<String>) {
         let path = match via {
-            Via::Values(v) => Path::start_morphism(v),
+            Via::Values(_) => {
+                let mut path = Path::start_morphism(Vec::new());
+                path.out(via);
+                path
+            }
             Via::Path(p) => p,
             Via::None => panic!("did not pass a predicate or a Path to FollowRecursive"),
         };
@@ -224,7 +228,36 @@ impl Path {
         let s = self.shape().clone();
         build_iterator(qs, s)
     }
+
+    // pub fn morphism_for(&self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<dyn iterator::Morphism> {
+    //     self.shape_from(Rc::new(RefCell::new(IteratorShape {
+    //         it: shape,
+    //         sent: false
+    //     }))).build_iterator()
+    // }
 }
+
+
+// pub struct MorphismFor {
+//     qs: Rc<RefCell<dyn QuadStore>>
+// }
+
+// impl MorphismFor {
+//     pub fn new(qs: Rc<RefCell<dyn QuadStore>>) -> Rc<dyn iterator::Morphism> {
+//         return Rc::new(MorphismFor {
+//             qs
+//         })
+//     }
+// }
+
+// impl iterator::Morphism for MorphismFor {
+//     fn morph(&self, shape: Rc<RefCell<dyn iterator::Shape>>) -> Rc<RefCell<dyn iterator::Shape>> {
+//         self.shape_from(IteratorShape {
+//             it: shape
+//         }).build_iterator()
+//     }
+// }
+
 
 
 
@@ -244,7 +277,7 @@ impl MorphismForPath {
 
 impl iterator::Morphism for MorphismForPath {
     fn morph(&self, shape: Rc<RefCell<dyn iterator::Shape>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        return self.path.clone().shape_from(Rc::new(RefCell::new(IteratorShape{it: shape, sent: false}))).borrow().build_iterator(self.qs.clone())
+        return self.path.clone().shape_from(Rc::new(RefCell::new(IteratorShape{it: Some(shape)}))).borrow_mut().build_iterator(self.qs.clone())
     }
 }
 

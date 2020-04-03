@@ -208,7 +208,16 @@ impl Morphism for FollowRecursiveMorphism {
 
     fn apply(&self, shape: Rc<RefCell<dyn Shape>>, ctx: &mut PathContext) -> (Rc<RefCell<dyn Shape>>, Option<PathContext>) {
         println!("FollowRecursiveMorphism apply()");
-        (self.path.clone().shape_from(shape), None)
+
+        (
+            Recursive::new(
+                self.path.clone(),
+                shape,
+                self.max_depth, 
+                self.depth_tags.clone()
+            ),
+            None
+        )
     }
 }
 

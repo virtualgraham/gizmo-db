@@ -64,21 +64,21 @@ fn simple_query_tests() {
     // use .getLimit
     ///////////////////////
 
-    // let mut r:Vec<String> = g
-    //     .v(None)
-    //     .get_limit_values(5)
-    //     .map(|v| v.to_string()).collect();
-    // let mut f:Vec<String> = vec![
-    //     "<alice>".into(),
-    //     "<bob>".into(),
-    //     "<follows>".into(),
-    //     "<fred>".into(),
-    //     "<status>".into()
-    // ];
-    // r.sort();
-    // f.sort();
+    let mut r:Vec<String> = g
+        .v(None)
+        .iter_values().take(5)
+        .map(|v| v.to_string()).collect();
+    let mut f:Vec<String> = vec![
+        "<alice>".into(),
+        "<bob>".into(),
+        "<follows>".into(),
+        "<fred>".into(),
+        "<status>".into()
+    ];
+    r.sort();
+    f.sort();
 
-    // assert_eq!(r, f);
+    assert_eq!(r, f);
 
 
     /////////////////////////
@@ -674,20 +674,20 @@ fn simple_query_tests() {
     // show a simple save optional
     /////////////////////////
 
-    // let mut r:Vec<String> = g.v(vec!["<bob>", "<charle>"])
-    //     .out("<follows>", None)
-    //     .save_opt("<status>", "somecool")
-    //     .all().map(|x| x["somecool"].to_string()).collect();
+    let mut r:Vec<String> = g.v(vec!["<bob>", "<charlie>"])
+        .out("<follows>", None)
+        .save_opt("<status>", "somecool")
+        .iter().filter_map(|x| x.get("somecool").map(|v| v.to_string())).collect();
 
-    // let mut f:Vec<String> = vec![
-    //     "cool_person".into(),
-    //     "cool_person".into()
-    // ];
+    let mut f:Vec<String> = vec![
+        "cool_person".into(),
+        "cool_person".into()
+    ];
 
-    // r.sort();
-    // f.sort();
+    r.sort();
+    f.sort();
 
-    // assert_eq!(r, f);
+    assert_eq!(r, f);
 
     /////////////////////////
     // save iri no tag
@@ -922,7 +922,127 @@ fn simple_query_tests() {
 
     assert!(sort_and_compare(&mut r, &mut f));
 
+    /////////////////////////
+    // recursive follow
+    /////////////////////////
+
+    let mut r:Vec<String> = g.v("<charlie>")
+        .follow_recursive("<follows>", None, None)
+        .iter_values().map(|v| v.to_string()).collect();
+
+    let mut f:Vec<String> = vec![
+        "<bob>".into(),
+        "<dani>".into(),
+        "<fred>".into(),
+        "<greg>".into(),
+    ];
+
+    assert!(sort_and_compare(&mut r, &mut f));
+
+    /////////////////////////
+    // recursive follow tag
+    /////////////////////////
+
+    let mut r:Vec<String> = g.v("<charlie>")
+        .follow_recursive("<follows>", "depth", None)
+        .iter().map(|x| x["depth"].to_string()).collect();
+
+    let mut f:Vec<String> = vec![
+        1.to_string(),
+        1.to_string(),
+        2.to_string(),
+        2.to_string()
+    ];
+
+    assert!(sort_and_compare(&mut r, &mut f));
 
 
+    /////////////////////////
+    // recursive follow path
+    /////////////////////////
+
+    let mut r:Vec<String> = g.v("<charlie>")
+        .follow_recursive(&g.v(None).out("<follows>", None), None, None)
+        .iter_values().map(|v| v.to_string()).collect();
+
+    let mut f:Vec<String> = vec![
+        "<bob>".into(),
+        "<dani>".into(),
+        "<fred>".into(),
+        "<greg>".into(),
+    ];
+
+    assert!(sort_and_compare(&mut r, &mut f));
+
+
+    /////////////////////////
+    // find non-existent
+    /////////////////////////
+
+    let mut r:Vec<String> = g.v("<not-existing>")
+        .follow_recursive(&g.v(None).out("<follows>", None), None, None)
+        .iter_values().map(|v| v.to_string()).collect();
+
+    let mut f:Vec<String> = vec![
+    ];
+
+    assert!(sort_and_compare(&mut r, &mut f));
+
+
+    /////////////////////////
+    // use order
+    /////////////////////////
+
+    let mut r:Vec<String> = g.v(None)
+        .order()
+        .iter_values().map(|v| v.to_string()).collect();
+
+    let mut f:Vec<String> = vec![
+        "<alice>".into(),
+        "<are>".into(),
+        "<bob>".into(),
+        "<charlie>".into(),
+        "<dani>".into(),
+        "<emily>".into(),
+        "<follows>".into(),
+        "<fred>".into(),
+        "<greg>".into(),
+        "<predicates>".into(),
+        "<smart_graph>".into(),
+        "<status>".into(),
+        "cool_person".into(),
+        "smart_person".into(),
+    ];
+
+    assert!(sort_and_compare(&mut r, &mut f));
+
+
+    /////////////////////////
+    // use order tags
+    /////////////////////////
+
+    let mut r:Vec<String> = g.v(None)
+        .tag("target")
+        .order()
+        .iter().map(|x| x["target"].to_string()).collect();
+
+    let mut f:Vec<String> = vec![
+        "<alice>".into(),
+        "<are>".into(),
+        "<bob>".into(),
+        "<charlie>".into(),
+        "<dani>".into(),
+        "<emily>".into(),
+        "<follows>".into(),
+        "<fred>".into(),
+        "<greg>".into(),
+        "<predicates>".into(),
+        "<smart_graph>".into(),
+        "<status>".into(),
+        "cool_person".into(),
+        "smart_person".into(),
+    ];
+
+    assert!(sort_and_compare(&mut r, &mut f));
 }
 

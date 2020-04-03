@@ -109,6 +109,8 @@ impl fmt::Display for SaveNext {
 impl Base for SaveNext {
 
     fn tag_results(&self, dst: &mut HashMap<String, refs::Ref>) {
+        println!("SaveNext tag_results");
+
         self.it.borrow().tag_results(dst);
 
         let v = self.result();
@@ -170,6 +172,8 @@ impl fmt::Display for SaveContains {
 impl Base for SaveContains {
 
     fn tag_results(&self, dst: &mut HashMap<String, refs::Ref>) {
+        println!("SaveContains tag_results");
+
         self.it.borrow().tag_results(dst);
 
         let v = self.result();

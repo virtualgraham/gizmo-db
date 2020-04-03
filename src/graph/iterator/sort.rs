@@ -141,16 +141,21 @@ impl Base for SortNext {
 
     #[allow(unused)]
     fn next_path(&mut self) -> bool {
-        if self.index >= self.ordered.as_ref().unwrap().len() {
+        if let Some(ordered) = self.ordered.as_ref() {
+            if self.index >= ordered.len() {
+                return false
+            }
+            let r = ordered.get(self.index).unwrap();
+            if (self.path_index+1) >= r.paths.len() as i32 {
+                return false
+            }
+            self.path_index += 1;
+            self.result = Some(r.paths.get(self.path_index as usize).unwrap().clone());
+            return true
+        } else {
+            println!("SortNext.ordered is None");
             return false
         }
-        let r = self.ordered.as_ref().unwrap().get(self.index).unwrap();
-        if (self.path_index+1) >= r.paths.len() as i32 {
-            return false
-        }
-        self.path_index += 1;
-        self.result = Some(r.paths.get(self.path_index as usize).unwrap().clone());
-        return true
     }
 
     fn err(&self) -> Option<String> {
