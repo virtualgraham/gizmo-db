@@ -2,6 +2,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use super::{Shape, Scanner};
 use super::refs::Ref;
+use super::super::quad::{Quad, QuadStore};
 use std::collections::HashMap;
 
 
@@ -171,5 +172,33 @@ impl Iterator for EachIterator {
         } else {
             return self.do_path()
         }
+    }
+}
+
+pub struct QuadIterator {
+    qs: Rc<RefCell<dyn QuadStore>>,
+    it: Rc<RefCell<dyn Scanner>>
+}
+
+impl QuadIterator {
+    pub fn new(qs: Rc<RefCell<dyn QuadStore>>, it: Rc<RefCell<dyn Scanner>>) -> QuadIterator {
+        QuadIterator {
+            qs,
+            it
+        }
+    }
+}
+
+impl Iterator for QuadIterator {
+    type Item = Quad;
+
+    fn next(&mut self) -> Option<Quad> {
+        if self.it.borrow_mut().next() {
+            if let Some(r) = self.it.borrow().result() {
+                return self.qs.borrow().quad(&r);
+            }
+        }
+
+        return None
     }
 }

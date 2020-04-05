@@ -11,6 +11,10 @@ use graph::value::Value;
 use std::collections::HashMap;
 
 
+
+
+
+
 fn main() {
  
     let simple_graph = gizmo::new_memory_graph();
@@ -71,7 +75,7 @@ fn main() {
     let mut r:Vec<String> = g.v(vec!["<bob>", "<charlie>"])
         .out("<follows>", None)
         .save_opt("<status>", "somecool")
-        .iter().filter_map(|x| x.get("somecool").map(|v| v.to_string())).collect();
+        .iter_tags().filter_map(|x| x.get("somecool").map(|v| v.to_string())).collect();
 
     println!("r: {:?}", r);
 

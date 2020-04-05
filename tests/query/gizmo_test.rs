@@ -258,7 +258,7 @@ fn simple_query_tests() {
     let mut r:Vec<String> = g
         .v("<fred>")
         .both(None, "pred")
-        .iter().map(|x| x["pred"].to_string()).collect(); // just pred labels
+        .iter_tags().map(|x| x["pred"].to_string()).collect(); // just pred labels
 
 
     let mut f:Vec<String> = vec![
@@ -333,7 +333,7 @@ fn simple_query_tests() {
         .out("<status>", None)
         .is("cool_person")
         .back("f")
-        .iter().map(|x| x["acd"].to_string()).collect(); // just pred labels
+        .iter_tags().map(|x| x["acd"].to_string()).collect(); // just pred labels
 
     let mut f:Vec<String> = vec![
         "<dani>".into(),
@@ -658,7 +658,7 @@ fn simple_query_tests() {
 
     let mut r:Vec<String> = g.v(None)
         .save("<status>", "somecool")
-        .iter().map(|x| x["somecool"].to_string()).collect();
+        .iter_tags().map(|x| x["somecool"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "cool_person".into(),
@@ -677,7 +677,7 @@ fn simple_query_tests() {
     let mut r:Vec<String> = g.v(vec!["<bob>", "<charlie>"])
         .out("<follows>", None)
         .save_opt("<status>", "somecool")
-        .iter().filter_map(|x| x.get("somecool").map(|v| v.to_string())).collect();
+        .iter_tags().filter_map(|x| x.get("somecool").map(|v| v.to_string())).collect();
 
     let mut f:Vec<String> = vec![
         "cool_person".into(),
@@ -695,7 +695,7 @@ fn simple_query_tests() {
 
     let mut r:Vec<String> = g.v(None)
         .save("<status>", None)
-        .iter().map(|x| x["<status>"].to_string()).collect();
+        .iter_tags().map(|x| x["<status>"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "cool_person".into(),
@@ -717,7 +717,7 @@ fn simple_query_tests() {
 
     let mut r:Vec<String> = g.v("cool_person")
         .save_r("<status>", "who")
-        .iter().map(|x| x["who"].to_string()).collect();
+        .iter_tags().map(|x| x["who"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "<greg>".into(),
@@ -733,7 +733,7 @@ fn simple_query_tests() {
 
     let mut r:Vec<String> = g.v("<dani>")
         .out(None, "pred")
-        .iter().map(|x| x["pred"].to_string()).collect();
+        .iter_tags().map(|x| x["pred"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "<follows>".into(),
@@ -749,7 +749,7 @@ fn simple_query_tests() {
 
     let mut r:Vec<String> = g.v("<dani>")
         .out(None, vec!["pred", "foo", "bar"])
-        .iter().map(|x| x["foo"].to_string()).collect();
+        .iter_tags().map(|x| x["foo"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "<follows>".into(),
@@ -813,7 +813,7 @@ fn simple_query_tests() {
 
     let mut r:Vec<String> = g.v("<bob>")
         .save_in_predicates("pred")
-        .iter().map(|x| x["pred"].to_string()).collect();
+        .iter_tags().map(|x| x["pred"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "<follows>".into(),
@@ -945,7 +945,7 @@ fn simple_query_tests() {
 
     let mut r:Vec<String> = g.v("<charlie>")
         .follow_recursive("<follows>", "depth", None)
-        .iter().map(|x| x["depth"].to_string()).collect();
+        .iter_tags().map(|x| x["depth"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         1.to_string(),
@@ -1024,7 +1024,7 @@ fn simple_query_tests() {
     let mut r:Vec<String> = g.v(None)
         .tag("target")
         .order()
-        .iter().map(|x| x["target"].to_string()).collect();
+        .iter_tags().map(|x| x["target"].to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "<alice>".into(),

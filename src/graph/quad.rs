@@ -1,6 +1,6 @@
 use super::value::Value;
 use super::refs::{Size, Ref, Namer};
-use super::iterator::{Shape};
+use super::iterator::Shape;
 use super::transaction::Transaction;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -161,3 +161,4 @@ pub struct Stats {
     pub nodes: Size,
     pub quads: Size
 }
+

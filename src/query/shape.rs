@@ -1227,4 +1227,32 @@ pub fn labels(from: Rc<RefCell<dyn Shape>>) -> Rc<RefCell<dyn Shape>> {
     }))
 }
 
-// }]),]))))}))}
+pub fn filter_quads(subject: Option<Vec<Value>>, predicate: Option<Vec<Value>>, object: Option<Vec<Value>>, label: Option<Vec<Value>>) -> Rc<RefCell<dyn Shape>> {
+    let q = Quads::new(Vec::new());
+
+    if let Some(sub) = subject {
+        if !sub.is_empty() {
+            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Subject, Some(Lookup::new(sub))));
+        }
+    }
+
+    if let Some(pred) = predicate {
+        if !pred.is_empty() {
+            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Predicate, Some(Lookup::new(pred))));
+        }
+    }
+
+    if let Some(obj) = object {
+        if !obj.is_empty() {
+            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Object, Some(Lookup::new(obj))));
+        }
+    }
+
+    if let Some(lbl) = label {
+        if !lbl.is_empty() {
+            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Label, Some(Lookup::new(lbl))));
+        }
+    }
+
+    return q
+}

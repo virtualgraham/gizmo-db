@@ -48,8 +48,8 @@ impl GraphWrapper {
         self.session.borrow().write(quads)
     }
 
-    pub fn read(&self) -> Vec<Quad> {
-        self.session.borrow().read()
+    pub fn read(&self, sub: Option<Vec<Value>>, pred: Option<Vec<Value>>, obj: Option<Vec<Value>>, label: Option<Vec<Value>>) -> impl Iterator<Item = Quad> {
+        self.session.borrow().read(sub, pred, obj, label)
     }
 
     pub fn delete(&self, quads: Vec<Quad>) {
@@ -70,9 +70,10 @@ impl Session {
         }
     }
 
-    fn read(&self) -> Vec<Quad> {
-        // TODO: implement
-        vec![Quad::new("a", "b", "c", "d")]
+    fn read(&self, sub: Option<Vec<Value>>, pred: Option<Vec<Value>>, obj: Option<Vec<Value>>, label: Option<Vec<Value>>) -> iterator::iterate::QuadIterator {
+        let values = shape::filter_quads(sub, pred, obj, label);
+        let it = values.borrow_mut().build_iterator(self.qs.clone()).borrow().iterate();
+        return iterator::iterate::QuadIterator::new(self.qs.clone(), it)
     }
 
     fn delete(&self, quads: Vec<Quad>) {
@@ -149,7 +150,7 @@ impl Path {
     // Finals
     ///////////////
 
-    pub fn iter(&self) -> impl Iterator<Item = HashMap<String, Value>> {
+    pub fn iter_tags(&self) -> impl Iterator<Item = HashMap<String, Value>> {
         let it = self.build_iterator_tree();
         let it = iterator::save::tag(&it, &"id");
         let qs = self.session.borrow().qs.clone();
@@ -239,7 +240,7 @@ impl Path {
 
 
     ///////////////////////////
-    // And(path: Path)
+    // And(path: Path) -
     ///////////////////////////
     
     pub fn and(&mut self, path: &Path) -> Path {
@@ -248,7 +249,7 @@ impl Path {
 
 
     ///////////////////////////
-    // Intersect(path: Path)
+    // Intersect(path: Path) -
     ///////////////////////////
 
     pub fn intersect(&mut self, path: &Path) -> Path {
@@ -258,7 +259,7 @@ impl Path {
 
 
     ///////////////////////////
-    // Or(path: Path)
+    // Or(path: Path) -
     ///////////////////////////
     
     pub fn or(&mut self, path: &Path) -> Path {
@@ -267,7 +268,7 @@ impl Path {
 
 
     /////////////////////////// 
-    // Union(path: Path)
+    // Union(path: Path) -
     ///////////////////////////
 
     pub fn union(&mut self, path: &Path) -> Path {
@@ -277,7 +278,7 @@ impl Path {
 
 
     ///////////////////////////
-    // Back(tag: String)
+    // Back(tag: String) -
     ///////////////////////////
     pub fn back<S: Into<String>>(&mut self, tag: S) -> Path {
         let np = self.path.back(tag.into());
@@ -289,7 +290,7 @@ impl Path {
 
 
     ///////////////////////////
-    // Back(tags: String[])
+    // Back(tags: String[]) -
     ///////////////////////////
     pub fn tag<T: Into<Tags>>(&mut self, tags: T) -> Path {
         self.path.tag(tags.into().to_vec());
@@ -298,7 +299,7 @@ impl Path {
 
 
     ///////////////////////////
-    // As(tags: String[])
+    // As(tags: String[]) -
     ///////////////////////////
     pub fn r#as<T: Into<Tags>>(&mut self, tags: T) -> Path {
         self.tag(tags)
