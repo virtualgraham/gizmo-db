@@ -4,7 +4,6 @@ use super::super::value::Value;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct Fixed {
     pub values: Rc<RefCell<Vec<refs::Ref>>>}
@@ -26,11 +25,11 @@ impl Fixed {
 }
 
 
-impl fmt::Display for Fixed {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Fixed({})", self.values.borrow().len())
-    }
-}
+// impl fmt::Display for Fixed {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Fixed({})", self.values.borrow().len())
+//     }
+// }
 
 
 impl Shape for Fixed {
@@ -89,11 +88,11 @@ impl FixedNext {
     }
 }
 
-impl fmt::Display for FixedNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "FixedNext")
-    }
-}
+// impl fmt::Display for FixedNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "FixedNext")
+//     }
+// }
 
 impl Base for FixedNext {
 
@@ -125,7 +124,6 @@ impl Scanner for FixedNext {
             return false
         }
         self.result = Some(self.values.borrow()[self.ind].clone());
-        println!("self.result {:?}", self.result);
         self.ind += 1;
         true
     }
@@ -149,11 +147,11 @@ impl FixedContains {
    }   
 }
 
-impl fmt::Display for FixedContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "FixedContains")
-    }
-}
+// impl fmt::Display for FixedContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "FixedContains")
+//     }
+// }
 
 impl Base for FixedContains {
 

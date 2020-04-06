@@ -3,7 +3,6 @@ use super::super::refs;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub fn tag<T: ToString>(shape: &Rc<RefCell<dyn Shape>>, tag: &T) -> Rc<RefCell<dyn Shape>> {
     if let ShapeType::Save(save) = shape.borrow_mut().shape_type() {
@@ -31,11 +30,11 @@ impl Save {
 }
 
 
-impl fmt::Display for Save {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Save")
-    }
-}
+// impl fmt::Display for Save {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Save")
+//     }
+// }
 
 
 impl Shape for Save {
@@ -100,17 +99,15 @@ impl SaveNext {
     }
 }
 
-impl fmt::Display for SaveNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SaveNext")
-    }
-}
+// impl fmt::Display for SaveNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "SaveNext")
+//     }
+// }
 
 impl Base for SaveNext {
 
     fn tag_results(&self, dst: &mut HashMap<String, refs::Ref>) {
-        println!("SaveNext tag_results");
-
         self.it.borrow().tag_results(dst);
 
         let v = self.result();
@@ -163,17 +160,15 @@ impl SaveContains {
     }
 }
 
-impl fmt::Display for SaveContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SaveContains")
-    }
-}
+// impl fmt::Display for SaveContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "SaveContains")
+//     }
+// }
 
 impl Base for SaveContains {
 
     fn tag_results(&self, dst: &mut HashMap<String, refs::Ref>) {
-        println!("SaveContains tag_results");
-
         self.it.borrow().tag_results(dst);
 
         let v = self.result();

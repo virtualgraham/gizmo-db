@@ -32,8 +32,7 @@ fn test_or_iterator_basics() {
     assert_eq!(7, stats.as_ref().unwrap().size.value);
 
     let expect = vec![1, 2, 3, 3, 9, 20, 21];
-    for i in 0..2 {
-        println!("i: {}", i);
+    for _ in 0..2 {
         assert_eq!(expect, common::iterated(or.clone()));
     }
 

@@ -3,7 +3,6 @@ use super::super::refs;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct Skip {
     skip: i64,
@@ -20,11 +19,11 @@ impl Skip {
 }
 
 
-impl fmt::Display for Skip {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Skip")
-    }
-}
+// impl fmt::Display for Skip {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Skip")
+//     }
+// }
 
 
 impl Shape for Skip {
@@ -83,11 +82,11 @@ impl SkipNext {
     }
 }
 
-impl fmt::Display for SkipNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SkipNext")
-    }
-}
+// impl fmt::Display for SkipNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "SkipNext")
+//     }
+// }
 
 impl Base for SkipNext {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>) {
@@ -149,11 +148,11 @@ impl SkipContains {
     }
 }
 
-impl fmt::Display for SkipContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SkipContains")
-    }
-}
+// impl fmt::Display for SkipContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "SkipContains")
+//     }
+// }
 
 impl Base for SkipContains {
 

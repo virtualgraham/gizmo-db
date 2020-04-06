@@ -4,7 +4,6 @@ use super::super::value::Value;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt;
 
 pub const MATERIALIZE_LIMIT: i32 = 1000;
 
@@ -30,11 +29,11 @@ impl Materialize {
 }
 
 
-impl fmt::Display for Materialize {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Materialize")
-    }
-}
+// impl fmt::Display for Materialize {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Materialize")
+//     }
+// }
 
 
 impl Shape for Materialize {
@@ -162,11 +161,11 @@ impl MaterializeNext {
     }
 }
 
-impl fmt::Display for MaterializeNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MaterializeNext")
-    }
-}
+// impl fmt::Display for MaterializeNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "MaterializeNext")
+//     }
+// }
 
 impl Base for MaterializeNext {
 
@@ -290,11 +289,11 @@ impl MaterializeContains {
     }
 }
 
-impl fmt::Display for MaterializeContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MaterializeContains")
-    }
-}
+// impl fmt::Display for MaterializeContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "MaterializeContains")
+//     }
+// }
 
 impl Base for MaterializeContains {
     

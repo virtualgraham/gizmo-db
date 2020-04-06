@@ -5,7 +5,6 @@ use super::iterator::{Shape, Scanner, Costs, Index, Base, ShapeType, Null, is_nu
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt;
 
 pub struct LinksTo {
     qs: Rc<RefCell<dyn QuadStore>>,
@@ -16,7 +15,7 @@ pub struct LinksTo {
 
 impl LinksTo {
     pub fn new(qs: Rc<RefCell<dyn QuadStore>>, primary: Rc<RefCell<dyn Shape>>, dir: Direction) -> Rc<RefCell<LinksTo>> {
-        println!("LinksTo dir {:?}", dir);
+
         Rc::new(RefCell::new(LinksTo {
             qs,
             primary,
@@ -28,9 +27,9 @@ impl LinksTo {
         }))
     }
 
-    fn direction(&self) -> Direction {
-        return self.dir.clone()
-    }
+    // fn direction(&self) -> Direction {
+    //     return self.dir.clone()
+    // }
 
     fn get_size(&mut self) -> Size {
         if self.size.value != 0 {
@@ -71,11 +70,11 @@ impl LinksTo {
 }
 
 
-impl fmt::Display for LinksTo {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LinksTo")
-    }
-}
+// impl fmt::Display for LinksTo {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "LinksTo")
+//     }
+// }
 
 
 impl Shape for LinksTo {
@@ -142,16 +141,16 @@ impl LinksToNext {
         }))
     }
 
-    fn direction(&self) -> Direction {
-        return self.dir.clone()
-    }
+    // fn direction(&self) -> Direction {
+    //     return self.dir.clone()
+    // }
 }
 
-impl fmt::Display for LinksToNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LinksToNext")
-    }
-}
+// impl fmt::Display for LinksToNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "LinksToNext")
+//     }
+// }
 
 impl Base for LinksToNext {
 
@@ -230,16 +229,16 @@ impl LinksToContains {
         }))
     }
 
-    fn direction(&self) -> Direction {
-        return self.dir.clone()
-    }
+    // fn direction(&self) -> Direction {
+    //     return self.dir.clone()
+    // }
 }
 
-impl fmt::Display for LinksToContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LinksToContains")
-    }
-}
+// impl fmt::Display for LinksToContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "LinksToContains")
+//     }
+// }
 
 impl Base for LinksToContains {
 
@@ -266,7 +265,6 @@ impl Base for LinksToContains {
 
 impl Index for LinksToContains {
     fn contains(&mut self, val:&Ref) -> bool {
-        println!("LinksToContains {:?} {:?}", val, &self.dir);
         let node = self.qs.borrow().quad_direction(val, &self.dir);
         match node {
             Some(n) => {

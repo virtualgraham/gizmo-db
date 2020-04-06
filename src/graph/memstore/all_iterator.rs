@@ -5,9 +5,7 @@ use crate::graph::iterator::{Base, Scanner, Index, Shape, Costs, ShapeType};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt;
 
-use std::collections::BTreeMap;
 use super::quadstore::{PrimStore, Primitive};
 use std::ops::Bound::{Excluded, Unbounded};
 
@@ -68,11 +66,11 @@ impl Shape for MemStoreAllIterator {
 }
 
 
-impl fmt::Display for MemStoreAllIterator {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MemStoreAllIterator")
-    }
-}
+// impl fmt::Display for MemStoreAllIterator {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "MemStoreAllIterator")
+//     }
+// }
 
 
 
@@ -100,7 +98,7 @@ impl MemStoreAllIteratorNext {
 }
 
 impl Base for MemStoreAllIteratorNext {
-    fn tag_results(&self, tags: &mut HashMap<String, Ref>) {}
+    fn tag_results(&self, _tags: &mut HashMap<String, Ref>) {}
 
     fn result(&self) -> Option<Ref> {
         match self.cur {
@@ -130,7 +128,6 @@ impl Scanner for MemStoreAllIteratorNext {
     fn next(&mut self) -> bool {
         
         if self.done {
-            println!("MemStoreAllIteratorNext called after done");
             return false
         }
 
@@ -160,8 +157,6 @@ impl Scanner for MemStoreAllIteratorNext {
             all.range((Excluded(self.cur.unwrap()), Unbounded)).filter(lam).map(|(k, _)| *k).next()
         };
 
-        println!("MemStoreAllIteratorNext {:?}", self.cur);
-
         if !self.cur.is_some() {
             self.done = true;
             return false
@@ -171,11 +166,11 @@ impl Scanner for MemStoreAllIteratorNext {
     }
 }
 
-impl fmt::Display for MemStoreAllIteratorNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MemStoreAllIteratorNext")
-    }
-}
+// impl fmt::Display for MemStoreAllIteratorNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "MemStoreAllIteratorNext")
+//     }
+// }
 
 
 
@@ -201,7 +196,7 @@ impl MemStoreAllIteratorContains {
 }
 
 impl Base for MemStoreAllIteratorContains {
-    fn tag_results(&self, tags: &mut HashMap<String, Ref>) {}
+    fn tag_results(&self, _tags: &mut HashMap<String, Ref>) {}
 
     fn result(&self) -> Option<Ref> {
         match self.cur {
@@ -256,8 +251,8 @@ impl Index for MemStoreAllIteratorContains {
     }
 }
 
-impl fmt::Display for MemStoreAllIteratorContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MemStoreAllIteratorContains")
-    }
-}
+// impl fmt::Display for MemStoreAllIteratorContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "MemStoreAllIteratorContains")
+//     }
+// }

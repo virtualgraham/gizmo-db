@@ -5,7 +5,6 @@ use gizmo_db::graph::iterator::{Shape, Scanner, Index, Costs, Base, ShapeType};
 use gizmo_db::graph::refs;
 use gizmo_db::graph::value::Value;
 use std::collections::HashMap;
-use std::fmt;
 
 pub struct Test {
     shape: Rc<RefCell<dyn Shape>>,
@@ -24,11 +23,11 @@ impl Test {
 }
 
 
-impl fmt::Display for Test {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Test")
-    }
-}
+// impl fmt::Display for Test {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Test")
+//     }
+// }
 
 
 impl Shape for Test {
@@ -67,11 +66,11 @@ struct TestNext {
     err: Option<String>
 }
 
-impl fmt::Display for TestNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "TestNext")
-    }
-}
+// impl fmt::Display for TestNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "TestNext")
+//     }
+// }
 
 impl Base for TestNext {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>) {
@@ -105,11 +104,11 @@ struct TestContains {
     err: Option<String>
 }
 
-impl fmt::Display for TestContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "TestContains")
-    }
-}
+// impl fmt::Display for TestContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "TestContains")
+//     }
+// }
 
 impl Base for TestContains {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>) {
@@ -164,11 +163,11 @@ impl Int64 {
 }
 
 
-impl fmt::Display for Int64 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Int64")
-    }
-}
+// impl fmt::Display for Int64 {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Int64")
+//     }
+// }
 
 
 impl Shape for Int64 {
@@ -233,11 +232,11 @@ struct Int64Next {
     result: i64
 }
 
-impl fmt::Display for Int64Next {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Int64Next")
-    }
-}
+// impl fmt::Display for Int64Next {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Int64Next")
+//     }
+// }
 
 impl Base for Int64Next {
 
@@ -288,11 +287,11 @@ struct Int64Contains {
     result: i64
 }
 
-impl fmt::Display for Int64Contains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Int64Contains")
-    }
-}
+// impl fmt::Display for Int64Contains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Int64Contains")
+//     }
+// }
 
 impl Base for Int64Contains {
 

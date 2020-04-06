@@ -1,9 +1,9 @@
 use super::path;
 use super::shape;
+use super::shape::Shape;
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::graph::quad::{QuadStore, QuadWriter, IgnoreOptions, Quad};
-use crate::graph::graphmock;
 use crate::graph::memstore;
 use crate::graph::value::Value;
 use crate::graph::iterator;
@@ -71,13 +71,22 @@ impl Session {
     }
 
     fn read(&self, sub: Option<Vec<Value>>, pred: Option<Vec<Value>>, obj: Option<Vec<Value>>, label: Option<Vec<Value>>) -> iterator::iterate::QuadIterator {
-        let values = shape::filter_quads(sub, pred, obj, label);
-        let it = values.borrow_mut().build_iterator(self.qs.clone()).borrow().iterate();
+        let mut quad_filter = shape::filter_quads(sub, pred, obj, label);
+
+        let quad_iterator = if quad_filter.0.is_empty() {
+            self.qs.borrow().quads_all_iterator()
+        } else {
+            quad_filter.build_iterator(self.qs.clone())
+        };
+
+        let it = quad_iterator.borrow().iterate();
         return iterator::iterate::QuadIterator::new(self.qs.clone(), it)
     }
 
     fn delete(&self, quads: Vec<Quad>) {
-        // TODO: implement
+        for quad in &quads {
+            self.qw.remove_quad(quad.clone()).unwrap();
+        }
     }
 
     fn run_tag_each_iterator(&mut self, it: Rc<RefCell<dyn iterator::Shape>>) -> iterator::iterate::TagEachIterator {
@@ -140,7 +149,7 @@ impl Path {
     }
 
     fn build_iterator_tree(&self) -> Rc<RefCell<dyn iterator::Shape>> {
-        let s = self.session.borrow();
+        // let s = self.session.borrow();
         let qs = self.session.borrow().qs.clone();
         self.path.build_iterator_on(qs)
     }

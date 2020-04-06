@@ -18,7 +18,6 @@ use std::collections::HashMap;
 use super::refs;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 use super::iterator::fixed::Fixed;
 use super::iterator::save::Save;
@@ -50,7 +49,7 @@ impl Tags {
 }
 
 
-pub trait Base : fmt::Display {
+pub trait Base {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>);
     fn result(&self) -> Option<refs::Ref>;
     fn next_path(&mut self) -> bool;
@@ -112,35 +111,35 @@ pub enum ShapeType<'a> {
 }
 
 
-impl<'a> fmt::Display for ShapeType<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ShapeType::And => write!(f, "And"),
-            ShapeType::Count => write!(f, "Count"),
-            ShapeType::Error => write!(f, "Error"),
-            ShapeType::Fixed(_) => write!(f, "Fixed"),
-            ShapeType::HasA => write!(f, "HasA"),
-            ShapeType::Int64 => write!(f, "Int64"),
-            ShapeType::Limit => write!(f, "Limit"),
-            ShapeType::LinksTo => write!(f, "LinksTo"),
-            ShapeType::Materialize => write!(f, "Materialize"),
-            ShapeType::Not => write!(f, "Not"),
-            ShapeType::Null => write!(f, "Null"),
-            ShapeType::Or => write!(f, "Or"),
-            ShapeType::Recursive => write!(f, "Recursive"),
-            ShapeType::Resolver => write!(f, "Resolver"),
-            ShapeType::Save(_) => write!(f, "Save"),
-            ShapeType::Skip => write!(f, "Skip"),
-            ShapeType::Sort => write!(f, "Sort"),
-            ShapeType::Test => write!(f, "Test"),
-            ShapeType::Unique => write!(f, "Unique"),
-            ShapeType::ValueFilter => write!(f, "ValueFilter"),
-            ShapeType::MemStoreIterator => write!(f, "MemStoreIterator"),
-        }
-    }
-}
+// impl<'a> fmt::Display for ShapeType<'a> {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match self {
+//             ShapeType::And => write!(f, "And"),
+//             ShapeType::Count => write!(f, "Count"),
+//             ShapeType::Error => write!(f, "Error"),
+//             ShapeType::Fixed(_) => write!(f, "Fixed"),
+//             ShapeType::HasA => write!(f, "HasA"),
+//             ShapeType::Int64 => write!(f, "Int64"),
+//             ShapeType::Limit => write!(f, "Limit"),
+//             ShapeType::LinksTo => write!(f, "LinksTo"),
+//             ShapeType::Materialize => write!(f, "Materialize"),
+//             ShapeType::Not => write!(f, "Not"),
+//             ShapeType::Null => write!(f, "Null"),
+//             ShapeType::Or => write!(f, "Or"),
+//             ShapeType::Recursive => write!(f, "Recursive"),
+//             ShapeType::Resolver => write!(f, "Resolver"),
+//             ShapeType::Save(_) => write!(f, "Save"),
+//             ShapeType::Skip => write!(f, "Skip"),
+//             ShapeType::Sort => write!(f, "Sort"),
+//             ShapeType::Test => write!(f, "Test"),
+//             ShapeType::Unique => write!(f, "Unique"),
+//             ShapeType::ValueFilter => write!(f, "ValueFilter"),
+//             ShapeType::MemStoreIterator => write!(f, "MemStoreIterator"),
+//         }
+//     }
+// }
 
-pub trait Shape : fmt::Display {
+pub trait Shape {
     fn iterate(&self) -> Rc<RefCell<dyn Scanner>>;
 
     fn lookup(&self) -> Rc<RefCell<dyn Index>>;
@@ -202,11 +201,11 @@ impl Null {
     }
 }
 
-impl fmt::Display for Null {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Null")
-    }
-}
+// impl fmt::Display for Null {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Null")
+//     }
+// }
 
 impl Base for Null {
     #[allow(unused)]
@@ -330,11 +329,11 @@ impl Index for Error {
 }
 
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Error({})", self.err)
-    }
-}
+// impl fmt::Display for Error {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Error({})", self.err)
+//     }
+// }
 
 
 impl Shape for Error {

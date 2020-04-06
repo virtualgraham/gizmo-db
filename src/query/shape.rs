@@ -8,7 +8,7 @@ use super::super::graph::linksto::LinksTo;
 use super::super::graph::refs::{Ref, Content};
 use super::super::graph::quad::{QuadStore, Direction};
 use regex::Regex;
-use std::fmt;
+// use std::fmt;
 
 pub enum ShapeType<'a> {
     Lookup(&'a mut Lookup),
@@ -31,30 +31,30 @@ pub enum ShapeType<'a> {
     Sort
 }
 
-impl<'a> fmt::Display for ShapeType<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ShapeType::Lookup(_) => write!(f, "Lookup"),
-            ShapeType::Null => write!(f, "Null"),
-            ShapeType::Fixed(_) => write!(f, "Fixed"),
-            ShapeType::AllNodes => write!(f, "AllNodes"),
-            ShapeType::Intersect(_) => write!(f, "Intersect"),
-            ShapeType::IntersectOpt(_) => write!(f, "IntersectOpt"),
-            ShapeType::NodesFrom => write!(f, "NodesFrom"),
-            ShapeType::QuadFilter => write!(f, "QuadFilter"),
-            ShapeType::Quads => write!(f, "Quads"),
-            ShapeType::Save => write!(f, "Save"),
-            ShapeType::Union => write!(f, "Union"),
-            ShapeType::Recursive => write!(f, "Recursive"),
-            ShapeType::IteratorShape => write!(f, "IteratorShape"),
-            ShapeType::Filter(_) => write!(f, "Filter"),
-            ShapeType::Except => write!(f, "Except"),
-            ShapeType::Unique => write!(f, "Unique"),
-            ShapeType::Page => write!(f, "Page"),
-            ShapeType::Sort => write!(f, "Sort")
-        }
-    }
-}
+// impl<'a> fmt::Display for ShapeType<'a> {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match self {
+//             ShapeType::Lookup(_) => write!(f, "Lookup"),
+//             ShapeType::Null => write!(f, "Null"),
+//             ShapeType::Fixed(_) => write!(f, "Fixed"),
+//             ShapeType::AllNodes => write!(f, "AllNodes"),
+//             ShapeType::Intersect(_) => write!(f, "Intersect"),
+//             ShapeType::IntersectOpt(_) => write!(f, "IntersectOpt"),
+//             ShapeType::NodesFrom => write!(f, "NodesFrom"),
+//             ShapeType::QuadFilter => write!(f, "QuadFilter"),
+//             ShapeType::Quads => write!(f, "Quads"),
+//             ShapeType::Save => write!(f, "Save"),
+//             ShapeType::Union => write!(f, "Union"),
+//             ShapeType::Recursive => write!(f, "Recursive"),
+//             ShapeType::IteratorShape => write!(f, "IteratorShape"),
+//             ShapeType::Filter(_) => write!(f, "Filter"),
+//             ShapeType::Except => write!(f, "Except"),
+//             ShapeType::Unique => write!(f, "Unique"),
+//             ShapeType::Page => write!(f, "Page"),
+//             ShapeType::Sort => write!(f, "Sort")
+//         }
+//     }
+// }
 
 
 pub trait Shape {
@@ -132,7 +132,6 @@ impl Lookup {
 
 impl Shape for Lookup {
     fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        println!("Lookup build_iterator()"); 
         let f = self.resolve(qs.clone());
         if f.is_none() {
             return iterator::Null::new();
@@ -176,7 +175,7 @@ impl Fixed {
 }
 
 impl Shape for Fixed {
-    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, _qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         let it = iterator::fixed::Fixed::new(vec![]);
         for v in &self.0 {
             if let Content::Quad(_) = v.content {
@@ -215,7 +214,7 @@ impl Null {
 }
 
 impl Shape for Null {
-    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, _qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         return iterator::Null::new();
     }
 
@@ -345,7 +344,7 @@ impl Shape for NodesFrom {
         return HasA::new(qs.clone(), sub, self.dir.clone())
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -382,26 +381,21 @@ impl QuadFilter {
 
 impl Shape for QuadFilter {
     fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        println!("Quad Filter build_iterator()");
 
         if self.values.is_none() {
-            println!("Quad Filter self.values.is_none()");
             return iterator::Null::new() 
         }
 
         if let Some(v) = one(self.values.clone().unwrap()) {
-            println!("Quad Filter Some(v) = one(self.values.clone().unwrap())");
             return qs.borrow().quad_iterator(&self.dir, &v)
         }
 
         let sub = self.values.clone().unwrap().borrow_mut().build_iterator(qs.clone());
 
-        println!("Quad Filter LinksTo::new(qs.clone(), sub, self.dir.clone())");
-
         LinksTo::new(qs.clone(), sub, self.dir.clone())
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -429,7 +423,6 @@ impl Quads {
 
 impl Shape for Quads {
     fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
-        println!("Quads build_iterator() {:?} self.0.len()", self.0.len());
 
         if self.0.is_empty() {
             return iterator::Null::new() 
@@ -448,7 +441,7 @@ impl Shape for Quads {
         return iterator::and::And::new(its)
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -488,7 +481,7 @@ impl Shape for Save {
         return it
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -522,7 +515,7 @@ impl Shape for Union {
         return iterator::or::Or::new(sub)
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -545,7 +538,7 @@ impl Shape for Unique {
        return iterator::unique::Unique::new(it);
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -587,7 +580,7 @@ impl Shape for Recursive {
         return it
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         return None
     }
 
@@ -603,7 +596,7 @@ pub struct IteratorShape {
 }
 
 impl Shape for IteratorShape {
-    fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
+    fn build_iterator(&mut self, _qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         return if self.it.is_some() {
             let it = self.it.as_ref().unwrap().clone();
             self.it = None;
@@ -613,7 +606,7 @@ impl Shape for IteratorShape {
         }
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -645,7 +638,6 @@ impl Shape for IntersectOpt {
     fn build_iterator(&mut self, qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if self.sub.0.is_empty() {
             if self.opt.is_empty() {
-                println!("IntersectOpt build_iterator opt.is_empty");
                 return iterator::Null::new() 
             }
             self.sub = Intersect(vec![AllNodes::new()])
@@ -654,25 +646,20 @@ impl Shape for IntersectOpt {
         let sub:Vec<Rc<RefCell<dyn iterator::Shape>>> = self.sub.0.iter().map(|s| s.borrow_mut().build_iterator(qs.clone())).collect();
         let opt:Vec<Rc<RefCell<dyn iterator::Shape>>> = self.opt.iter().map(|s| s.borrow_mut().build_iterator(qs.clone())).collect();
 
-        println!("IntersectOpt sub.len() {} opt.len() {}", sub.len(), opt.len());
-
         if sub.len() == 1 && opt.len() == 0 {
-            println!("IntersectOpt build_iterator sub.len() == 1 && opt.len() == 0");
             return sub[0].clone()
         }
         
         let it = iterator::and::And::new(sub);
         
         for sit in opt {
-            println!("IntersectOpt add_optional_iterator {:?}", sit.borrow_mut().shape_type().to_string());
             it.borrow_mut().add_optional_iterator(sit);
         }
 
-        println!("IntersectOpt build_iterator it");
         return it
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -705,7 +692,7 @@ impl Shape for Except {
         }
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -743,7 +730,7 @@ impl Shape for Page {
         return it
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -772,7 +759,7 @@ impl Shape for Sort {
         return iterator::sort::Sort::new(qs.clone(), it)
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         // TODO: Implement
         return None
     }
@@ -929,7 +916,7 @@ impl Shape for Filter {
         return it
     }
 
-    fn optimize(&mut self, r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
+    fn optimize(&mut self, _r: Option<&dyn Optimizer>) -> Option<Rc<RefCell<dyn Shape>>> {
         return None
     }
 
@@ -978,28 +965,21 @@ pub fn intersect_optional(main: Rc<RefCell<dyn Shape>>, opt: Rc<RefCell<dyn Shap
     };
 
     if optional.is_empty() {
-        println!("interset_optional optional.is_empty()");
         return main.clone()
     }
-    
-    println!("interset_optional main shape_type {}", main.borrow_mut().shape_type());
-    println!("interset_optional opt shape_type {}", opt.borrow_mut().shape_type());
 
     match main.borrow_mut().shape_type() {
         ShapeType::Intersect(i) => {
-            println!("interset_optional ShapeType::Intersect");
             return Rc::new(RefCell::new(IntersectOpt{
                 sub: i.clone(),
                 opt: optional
             }))
         },
         ShapeType::IntersectOpt(io) => {
-            println!("interset_optional ShapeType::IntersectOp");
             optional.iter().for_each(|x| io.opt.push(x.clone()));
             return main.clone()
         },
         _ => {
-            println!("interset_optional ShapeType::_");
             return Rc::new(RefCell::new(IntersectOpt{
                 sub: Intersect(vec![main.clone()]),
                 opt: optional
@@ -1022,8 +1002,7 @@ pub fn build_iterator(qs: Rc<RefCell<dyn QuadStore>>, shape:Rc<RefCell<dyn Shape
 
 // buildOut() from query/shape/path.go
 pub fn new_in_out(from:Rc<RefCell<dyn Shape>>, mut via:Rc<RefCell<dyn Shape>>, labels:Option<Rc<RefCell<dyn Shape>>>, tags:Option<Vec<String>>, r#in: bool) -> Rc<RefCell<dyn Shape>> {
-   println!("new_in_out");
-   
+
     let start = if r#in { Direction::Object } else { Direction::Subject };
     let goal = if r#in { Direction::Subject } else { Direction::Object };
 
@@ -1227,30 +1206,30 @@ pub fn labels(from: Rc<RefCell<dyn Shape>>) -> Rc<RefCell<dyn Shape>> {
     }))
 }
 
-pub fn filter_quads(subject: Option<Vec<Value>>, predicate: Option<Vec<Value>>, object: Option<Vec<Value>>, label: Option<Vec<Value>>) -> Rc<RefCell<dyn Shape>> {
-    let q = Quads::new(Vec::new());
+pub fn filter_quads(subject: Option<Vec<Value>>, predicate: Option<Vec<Value>>, object: Option<Vec<Value>>, label: Option<Vec<Value>>) -> Quads {
+    let mut q = Quads(Vec::new());
 
     if let Some(sub) = subject {
         if !sub.is_empty() {
-            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Subject, Some(Lookup::new(sub))));
+            q.0.push(QuadFilter::new_struct(Direction::Subject, Some(Lookup::new(sub))));
         }
     }
 
     if let Some(pred) = predicate {
         if !pred.is_empty() {
-            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Predicate, Some(Lookup::new(pred))));
+            q.0.push(QuadFilter::new_struct(Direction::Predicate, Some(Lookup::new(pred))));
         }
     }
 
     if let Some(obj) = object {
         if !obj.is_empty() {
-            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Object, Some(Lookup::new(obj))));
+            q.0.push(QuadFilter::new_struct(Direction::Object, Some(Lookup::new(obj))));
         }
     }
 
     if let Some(lbl) = label {
         if !lbl.is_empty() {
-            q.borrow_mut().0.push(QuadFilter::new_struct(Direction::Label, Some(Lookup::new(lbl))));
+            q.0.push(QuadFilter::new_struct(Direction::Label, Some(Lookup::new(lbl))));
         }
     }
 

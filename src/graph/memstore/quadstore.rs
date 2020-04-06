@@ -375,7 +375,7 @@ impl QuadStore for MemStore {
         let datastore = self.store.read().unwrap();
 
         let quad = datastore.internal_quad(r);
-        println!("memstore quad_direction quad {:?}", quad);
+
         match quad {
             Some(q) => {
                 let id = q.dir(d);
@@ -393,7 +393,7 @@ impl QuadStore for MemStore {
         }
     }
     
-    fn stats(&self, exact: bool) -> Result<Stats, String> {
+    fn stats(&self, _exact: bool) -> Result<Stats, String> {
         let datastore = self.store.read().unwrap();
 
         Ok(Stats {

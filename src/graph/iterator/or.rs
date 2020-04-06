@@ -4,14 +4,13 @@ use super::super::refs;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct Or {
     is_short_circuiting: bool,
     sub: Vec<Rc<RefCell<dyn Shape>>>,
-    cur_ind: Option<usize>,
-    result: Option<refs::Ref>,
-    err: Option<String>
+//     cur_ind: Option<usize>,
+//     result: Option<refs::Ref>,
+//     err: Option<String>
 }
 
 impl Or {
@@ -19,9 +18,9 @@ impl Or {
         Rc::new(RefCell::new(Or {
             is_short_circuiting: false,
             sub,
-            cur_ind: None,
-            result: None,
-            err: None
+            // cur_ind: None,
+            // result: None,
+            // err: None
         }))
     }
 
@@ -29,9 +28,9 @@ impl Or {
         Rc::new(RefCell::new(Or {
             is_short_circuiting: true,
             sub,
-            cur_ind: None,
-            result: None,
-            err: None
+            // cur_ind: None,
+            // result: None,
+            // err: None
         }))
     }
 
@@ -41,11 +40,11 @@ impl Or {
 }
 
 
-impl fmt::Display for Or {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Or")
-    }
-}
+// impl fmt::Display for Or {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Or")
+//     }
+// }
 
 
 impl Shape for Or {
@@ -138,11 +137,11 @@ impl OrNext {
     }
 }
 
-impl fmt::Display for OrNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "OrNext")
-    }
-}
+// impl fmt::Display for OrNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "OrNext")
+//     }
+// }
 
 impl Base for OrNext {
 
@@ -256,11 +255,11 @@ impl OrContains {
     }
 }
 
-impl fmt::Display for OrContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "OrContains")
-    }
-}
+// impl fmt::Display for OrContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "OrContains")
+//     }
+// }
 
 impl Base for OrContains {
 

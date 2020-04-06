@@ -7,7 +7,6 @@ use gizmo_db::graph::linksto::{LinksTo};
 use gizmo_db::graph::graphmock::{Store};
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::collections::HashSet;
 
 #[test]
 fn test_links_to() {

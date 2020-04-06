@@ -3,7 +3,6 @@ use super::super::refs;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct Limit {
     limit: i64,
@@ -20,11 +19,11 @@ impl Limit {
 }
 
 
-impl fmt::Display for Limit {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Limit({})", self.limit)
-    }
-}
+// impl fmt::Display for Limit {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Limit({})", self.limit)
+//     }
+// }
 
 
 impl Shape for Limit {
@@ -79,11 +78,11 @@ impl LimitNext {
     }
 }
 
-impl fmt::Display for LimitNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LimitNext({})", self.limit)
-    }
-}
+// impl fmt::Display for LimitNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "LimitNext({})", self.limit)
+//     }
+// }
 
 impl Base for LimitNext {
 
@@ -145,11 +144,11 @@ impl LimitContains {
     }
 }
 
-impl fmt::Display for LimitContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LimitContains({})", self.limit)
-    }
-}
+// impl fmt::Display for LimitContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "LimitContains({})", self.limit)
+//     }
+// }
 
 impl Base for LimitContains {
 

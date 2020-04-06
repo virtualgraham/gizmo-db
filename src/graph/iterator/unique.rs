@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
+
 
 pub struct Unique {
     sub_it: Rc<RefCell<dyn Shape>>,
@@ -19,11 +19,11 @@ impl Unique {
     }
 }
 
-impl fmt::Display for Unique {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Unique")
-    }
-}
+// impl fmt::Display for Unique {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Unique")
+//     }
+// }
 
 const UNIQUENESS_FACTOR:i64 = 2;
 
@@ -86,11 +86,11 @@ impl UniqueNext {
     }
 }
 
-impl fmt::Display for UniqueNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "UniqueNext")
-    }
-}
+// impl fmt::Display for UniqueNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "UniqueNext")
+//     }
+// }
 
 impl Base for UniqueNext {
 
@@ -147,11 +147,11 @@ impl UniqueContains {
     }
 }
 
-impl fmt::Display for UniqueContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "UniqueContains")
-    }
-}
+// impl fmt::Display for UniqueContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "UniqueContains")
+//     }
+// }
 
 impl Base for UniqueContains {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>) {

@@ -135,25 +135,30 @@ impl QuadWriter {
         self.qs.borrow_mut().apply_deltas(vec![Delta{action: Procedure::Add, quad}], &self.ignore_opts)
     }
     
-    pub fn add_quad_set(&self, quads: Vec<Quad>) -> Result<(), String> {
-        Ok(())
-    }
+    // pub fn add_quad_set(&self, quads: Vec<Quad>) -> Result<(), String> {
+    //     // TODO: Implement
+    //     Ok(())
+    // }
 
     pub fn remove_quad(&self, quad: Quad) -> Result<(), String> {
-        Ok(())
+        self.qs.borrow_mut().apply_deltas(vec![Delta{action: Procedure::Delete, quad}], &self.ignore_opts)
     }
 
     pub fn apply_transaction(&self, transaction: Transaction) -> Result<(), String> {
+        // TODO: Implement
         Ok(())
     }
 
+    // removes all quads with the given value.
     pub fn remove_node(&self, value: Value) -> Result<(), String> {
+        // TODO: Implement
         Ok(())
     }
 
-    pub fn close(&self) -> Result<(), String> {
-        Ok(())
-    }
+    // pub fn close(&self) -> Result<(), String> {
+    //     // TODO: Implement
+    //     Ok(())
+    // }
 }
 
 

@@ -1,11 +1,10 @@
 
 use super::refs::{Ref, Size};
 use super::quad::{Direction, QuadStore};
-use super::iterator::{Shape, Scanner, Costs, Index, Base, ShapeType, is_null, Null};
+use super::iterator::{Shape, Scanner, Costs, Index, Base, ShapeType, is_null};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt;
 
 pub struct HasA {
     qs: Rc<RefCell<dyn QuadStore>>,
@@ -22,23 +21,22 @@ impl HasA {
         }))
     }
 
-    fn direction(&self) -> Direction {
-        return self.dir.clone()
-    }
+    // fn direction(&self) -> Direction {
+    //     return self.dir.clone()
+    // }
 }
 
 
-impl fmt::Display for HasA {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "HasA")
-    }
-}
+// impl fmt::Display for HasA {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "HasA")
+//     }
+// }
 
 
 impl Shape for HasA {
     fn iterate(&self) -> Rc<RefCell<dyn Scanner>> {
         let temp = self.primary.borrow().iterate();
-        // println!("{}", temp.borrow().to_string());
         HasANext::new(self.qs.clone(), temp, self.dir.clone())
     }
 
@@ -102,16 +100,16 @@ impl HasANext {
         }))
     }
 
-    fn direction(&self) -> Direction {
-        return self.dir.clone()
-    }
+    // fn direction(&self) -> Direction {
+    //     return self.dir.clone()
+    // }
 }
 
-impl fmt::Display for HasANext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "HasANext")
-    }
-}
+// impl fmt::Display for HasANext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "HasANext")
+//     }
+// }
 
 
 impl Base for HasANext {
@@ -179,9 +177,9 @@ impl HasAContains {
         }))
     }
 
-    fn direction(&self) -> Direction {
-        return self.dir.clone()
-    }
+    // fn direction(&self) -> Direction {
+    //     return self.dir.clone()
+    // }
 
     fn next_contains(&mut self) -> bool {
         if self.results.is_none() {
@@ -211,11 +209,11 @@ impl HasAContains {
     }
 }
 
-impl fmt::Display for HasAContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "HasAContains")
-    }
-}
+// impl fmt::Display for HasAContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "HasAContains")
+//     }
+// }
 
 impl Base for HasAContains {
 

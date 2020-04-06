@@ -4,7 +4,6 @@ use super::super::refs;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct And {
     sub: Vec<Rc<RefCell<dyn Shape>>>,
@@ -28,9 +27,7 @@ impl And  {
     }
 
     pub fn add_optional_iterator(&mut self, sub: Rc<RefCell<dyn Shape>>) {
-        println!("And add_optional_iterator");
         if self.opt.is_none() { 
-            println!("And add_optional_iterator opt.is_none");
             self.opt = Some(Vec::new()); 
         }
         self.opt.as_mut().unwrap().push(sub);
@@ -42,11 +39,11 @@ impl And  {
     }
 }
 
-impl fmt::Display for And {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "And")
-    }
-}
+// impl fmt::Display for And {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "And")
+//     }
+// }
 
 impl Shape for And {
     fn iterate(&self) -> Rc<RefCell<dyn Scanner>> {
@@ -161,7 +158,6 @@ fn optimize_replacement(its: &Vec<Rc<RefCell<dyn Shape>>>) -> Option<Rc<RefCell<
     }
 
     if has_any_null_iterators(its) {
-        println!("optimize_replacement has_any_null_iterators");
         return Some(Null::new())
     }
 
@@ -330,11 +326,11 @@ impl AndNext {
     }
 }
 
-impl fmt::Display for AndNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "AndNext")
-    }
-}
+// impl fmt::Display for AndNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "AndNext")
+//     }
+// }
 
 impl Base for AndNext {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>) {
@@ -438,11 +434,11 @@ impl AndContains {
 }
 
 
-impl fmt::Display for AndContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "AndContains")
-    }
-}
+// impl fmt::Display for AndContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "AndContains")
+//     }
+// }
 
 
 impl Base for AndContains {
@@ -453,11 +449,9 @@ impl Base for AndContains {
         for (i, sub) in self.opt.iter().enumerate() {
             if let Some(opt) = self.opt_check.get(&i) {
                 if !opt { 
-                    println!("AndContains tag_results opt_check !opt continue");
                     continue 
                 }
             } else {
-                println!("AndContains tag_results opt_check None continue");
                 continue
             }
             sub.borrow().tag_results(dst);
@@ -489,11 +483,9 @@ impl Base for AndContains {
 
             if let Some(opt) = self.opt_check.get(&i) {
                 if !opt { 
-                    println!("AndContains next_path opt_check !opt continue");
                     continue 
                 }
             } else {
-                println!("AndContains next_path opt_check None continue");
                 continue
             }
 
@@ -579,7 +571,6 @@ impl Index for AndContains {
         }
         self.result = Some(val.clone());
         for (i, sub) in self.opt.iter().enumerate() {
-            println!("AndContains self.opt_check.insert {:?} {:?} {:?}", i, val, sub.borrow_mut().contains(val));
             self.opt_check.insert(i, sub.borrow_mut().contains(val));
         }
         true

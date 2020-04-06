@@ -342,8 +342,6 @@ fn simple_query_tests() {
     r.sort();
     f.sort();
 
-    println!("{:?}", r);
-
     assert_eq!(r, f);
 
     /////////////////////////

@@ -6,7 +6,6 @@ use super::super::value::Value;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 struct SeenAt {
     depth: i32,
@@ -39,11 +38,11 @@ impl Recursive {
 }
 
 
-impl fmt::Display for Recursive {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Recursive")
-    }
-}
+// impl fmt::Display for Recursive {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Recursive")
+//     }
+// }
 
 
 impl Shape for Recursive {
@@ -170,11 +169,11 @@ impl RecursiveNext {
 const RECURSEIVE_BASE_TAG:&str = "__base_recursive";
 
 
-impl fmt::Display for RecursiveNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "RecursiveNext")
-    }
-}
+// impl fmt::Display for RecursiveNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "RecursiveNext")
+//     }
+// }
 
 
 impl Base for RecursiveNext {
@@ -336,11 +335,11 @@ impl RecursiveContains {
     }
 }
 
-impl fmt::Display for RecursiveContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "RecursiveContains({})", self.next.borrow().to_string())
-    }
-}
+// impl fmt::Display for RecursiveContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "RecursiveContains({})", self.next.borrow().to_string())
+//     }
+// }
 
 impl Base for RecursiveContains {
 

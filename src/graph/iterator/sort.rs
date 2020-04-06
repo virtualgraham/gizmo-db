@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use std::fmt;
+
 
 pub struct Sort {
     qs: Rc<RefCell<dyn QuadStore>>,
@@ -23,11 +23,11 @@ impl Sort {
 }
 
 
-impl fmt::Display for Sort {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Sort")
-    }
-}
+// impl fmt::Display for Sort {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Sort")
+//     }
+// }
 
 
 impl Shape for Sort {
@@ -121,11 +121,11 @@ impl SortNext {
     }
 }
 
-impl fmt::Display for SortNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SortNext")
-    }
-}
+// impl fmt::Display for SortNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "SortNext")
+//     }
+// }
 
 impl Base for SortNext {
 
@@ -153,7 +153,6 @@ impl Base for SortNext {
             self.result = Some(r.paths.get(self.path_index as usize).unwrap().clone());
             return true
         } else {
-            println!("SortNext.ordered is None");
             return false
         }
     }

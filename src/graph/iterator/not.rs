@@ -4,7 +4,6 @@ use super::super::refs;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct Not {
     primary: Rc<RefCell<dyn Shape>>,
@@ -21,11 +20,11 @@ impl Not {
 }
 
 
-impl fmt::Display for Not {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Not")
-    }
-}
+// impl fmt::Display for Not {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Not")
+//     }
+// }
 
 
 impl Shape for Not {
@@ -86,11 +85,11 @@ impl NotNext {
     }
 }
 
-impl fmt::Display for NotNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "NotNext")
-    }
-}
+// impl fmt::Display for NotNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "NotNext")
+//     }
+// }
 
 impl Base for NotNext {
 
@@ -163,11 +162,11 @@ impl NotContains {
     }
 }
 
-impl fmt::Display for NotContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "NotContains")
-    }
-}
+// impl fmt::Display for NotContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "NotContains")
+//     }
+// }
 
 impl Base for NotContains {
 

@@ -7,11 +7,6 @@ use graph::quad::Quad;
 
 
 
-use graph::value::Value;
-use std::collections::HashMap;
-
-
-
 
 
 
@@ -42,8 +37,11 @@ fn main() {
     ]);
 
   
+    let read_result:Vec<Quad> = simple_graph.read(None, None, None, None).collect();
+    
+    println!("{:?}", read_result);
 
-    let g = simple_graph.g();
+    // let g = simple_graph.g();
 
     
     // let mut r:Vec<String> = g.v(vec!["<bob>", "<charle>"])
@@ -72,12 +70,12 @@ fn main() {
     // println!("r: {:?}", r);
 
 
-    let mut r:Vec<String> = g.v(vec!["<bob>", "<charlie>"])
-        .out("<follows>", None)
-        .save_opt("<status>", "somecool")
-        .iter_tags().filter_map(|x| x.get("somecool").map(|v| v.to_string())).collect();
+    // let r:Vec<String> = g.v(vec!["<bob>", "<charlie>"])
+    //     .out("<follows>", None)
+    //     .save_opt("<status>", "somecool")
+    //     .iter_tags().filter_map(|x| x.get("somecool").map(|v| v.to_string())).collect();
 
-    println!("r: {:?}", r);
+    // println!("r: {:?}", r);
 
 
     // let mut r:Vec<HashMap<String, Value>> = g.v(vec!["<bob>", "<charlie>"]).out("<follows>", None).iter().collect();

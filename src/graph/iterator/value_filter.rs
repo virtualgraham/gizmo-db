@@ -4,10 +4,9 @@ use super::super::value::{Value};
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 use super::super::quad::QuadStore;
 use super::super::number::Number;
-use regex::Regex;
+ use regex::Regex; // 
 
 
 
@@ -111,7 +110,6 @@ impl ValueFilterFunction for ComparisonValueFilter {
 
 
 fn run_str_op(a: &String, op:&Operator, b:&String) -> bool {
-    println!("{} {:?} {} {} {}", a, op, b, a < b, a > b);
     return match op {
         Operator::LT => a < b,
         Operator::GT => a > b,
@@ -179,11 +177,11 @@ impl ValueFilter {
     }
 }
 
-impl fmt::Display for ValueFilter {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ValueFilter")
-    }
-}
+// impl fmt::Display for ValueFilter {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "ValueFilter")
+//     }
+// }
 
 
 impl Shape for ValueFilter {
@@ -258,11 +256,11 @@ impl ValueFilterNext {
     }
 }
 
-impl fmt::Display for ValueFilterNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ValueFilterNext")
-    }
-}
+// impl fmt::Display for ValueFilterNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "ValueFilterNext")
+//     }
+// }
 
 impl Base for ValueFilterNext {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>) {
@@ -334,11 +332,11 @@ impl ValueFilterContains {
     }
 }
 
-impl fmt::Display for ValueFilterContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ValueFilterContains")
-    }
-}
+// impl fmt::Display for ValueFilterContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "ValueFilterContains")
+//     }
+// }
 
 impl Base for ValueFilterContains {
     fn tag_results(&self, tags: &mut HashMap<String, refs::Ref>) {

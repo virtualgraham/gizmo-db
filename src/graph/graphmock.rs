@@ -1,4 +1,4 @@
-use super::quad::{Stats, Quad, QuadStore, Direction, Delta, IgnoreOptions, Procedure, QuadWriter};
+use super::quad::{Stats, Quad, QuadStore, Direction, Delta, IgnoreOptions, Procedure};
 use super::iterator::{Shape};
 use super::iterator::fixed::{Fixed};
 use super::value::{Value};
@@ -62,8 +62,6 @@ impl QuadStore for Store {
     fn quad_iterator(&self, d: &Direction, r: &Ref) -> Rc<RefCell<dyn Shape>> {
         let fixed = Fixed::new(vec![]);
         for q in &self.data {
-            println!("Quad Iterator {:?} == {:?}, Direction: {:?}", q.get(d), r.key(), d);
-
             if let Some(k) = r.key() {
                 if q.get(d) == k {
                     fixed.borrow_mut().add(quad_value(q.clone()));
@@ -123,7 +121,7 @@ impl QuadStore for Store {
     }
     
 
-    fn apply_deltas(&mut self, deltas: Vec<Delta>, ignore_opts: &IgnoreOptions) -> Result<(), String> {
+    fn apply_deltas(&mut self, deltas: Vec<Delta>, _ignore_opts: &IgnoreOptions) -> Result<(), String> {
         // if !ignore_opts.ignore_dup || !ignore_opts.ignore_missing {
 
         // }
@@ -131,7 +129,6 @@ impl QuadStore for Store {
         for d in deltas {
             match d.action {
                 Procedure::Add => { 
-                    println!("adding quad {:?}", d.quad);
                     self.data.push(d.quad); 
                 },
                 Procedure::Delete =>  { 

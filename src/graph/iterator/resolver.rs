@@ -4,7 +4,6 @@ use super::super::value::Value;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct Resolver {
     qs: Rc<dyn refs::Namer>,
@@ -21,11 +20,11 @@ impl Resolver {
 }
 
 
-impl fmt::Display for Resolver {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Resolver")
-    }
-}
+// impl fmt::Display for Resolver {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Resolver")
+//     }
+// }
 
 
 impl Shape for Resolver {
@@ -105,11 +104,11 @@ impl ResolverNext {
     }
 }
 
-impl fmt::Display for ResolverNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ResolverNext")
-    }
-}
+// impl fmt::Display for ResolverNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "ResolverNext")
+//     }
+// }
 
 impl Base for ResolverNext {
 
@@ -195,11 +194,11 @@ impl ResolverContains {
 }
 
 
-impl fmt::Display for ResolverContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ResolverContains")
-    }
-}
+// impl fmt::Display for ResolverContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "ResolverContains")
+//     }
+// }
 
 
 impl Base for ResolverContains {

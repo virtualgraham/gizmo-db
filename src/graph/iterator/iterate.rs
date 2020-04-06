@@ -48,7 +48,6 @@ impl BaseIterator {
             }
             return ok
         } else {
-            println!("BaseIterator.it is None");
             return false;
         }
 

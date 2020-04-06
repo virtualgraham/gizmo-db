@@ -116,7 +116,6 @@ impl Path {
         let mut new_path = Path::new(self.qs.clone(), Vec::new());
         let mut i = (self.stack.len() - 1) as i64;
         loop {
-            println!("{}", i);
             if i < 0 {
                 return Some(self.reverse())
             }

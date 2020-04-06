@@ -4,7 +4,6 @@ use super::super::value::Value;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::fmt;
 
 pub struct Count {
     it: Rc<RefCell<dyn Shape>>,
@@ -21,11 +20,11 @@ impl Count {
 }
 
 
-impl fmt::Display for Count {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Count")
-    }
-}
+// impl fmt::Display for Count {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Count")
+//     }
+// }
 
 impl Shape for Count {
     fn iterate(&self) -> Rc<RefCell<dyn Scanner>> {
@@ -87,11 +86,11 @@ impl CountNext {
 }
 
 
-impl fmt::Display for CountNext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "CountNext")
-    }
-}
+// impl fmt::Display for CountNext {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "CountNext")
+//     }
+// }
 
 
 impl Base for CountNext {
@@ -163,11 +162,11 @@ impl CountContains {
     }
 }
 
-impl fmt::Display for CountContains {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "CountContains")
-    }
-}
+// impl fmt::Display for CountContains {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "CountContains")
+//     }
+// }
 
 impl Base for CountContains {
 
