@@ -7,8 +7,11 @@ use super::super::graph::value::Value;
 use super::super::graph::linksto::LinksTo;
 use super::super::graph::refs::{Ref, Content};
 use super::super::graph::quad::{QuadStore, Direction};
+
+use wildmatch::WildMatch;
+
+#[cfg(feature = "regex")]
 use regex::Regex;
-// use std::fmt;
 
 pub enum ShapeType<'a> {
     Lookup(&'a mut Lookup),
@@ -776,11 +779,13 @@ pub trait ValueFilter {
     fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>, shape: Rc<RefCell<dyn iterator::Shape>>) -> Rc<RefCell<dyn iterator::Shape>>;
 }
 
+#[cfg(feature = "regex")]
 pub struct Regexp {
     re: Regex,
     iri: bool
 }
 
+#[cfg(feature = "regex")]
 impl Regexp {
     pub fn new(pattern: String, iri: bool) -> Regexp {
         let re = Regex::new(&pattern).unwrap();
@@ -791,6 +796,7 @@ impl Regexp {
     }
 }
 
+#[cfg(feature = "regex")]
 impl ValueFilter for Regexp {
     fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>, it: Rc<RefCell<dyn iterator::Shape>>) -> Rc<RefCell<dyn iterator::Shape>> {
         iterator::value_filter::RegexValueFilter::new(it, qs, self.re.clone(), self.iri)
@@ -798,21 +804,23 @@ impl ValueFilter for Regexp {
 }
 
 
+
 pub struct Wildcard {
     pattern: String
 }
 
-fn quote_meta(s: &String) -> String {
-    let special = "\\.+*?()|[]{}^$";
-    let v:Vec<String> = s.chars().map(|x| {
-        if special.contains(x) {
-            return format!("\\{}", x)
-        } else {
-            return x.to_string()
-        }
-    }).collect();
-    return v.join("")
-}
+
+// fn quote_meta(s: &String) -> String {
+//     let special = "\\.+*?()|[]{}^$";
+//     let v:Vec<String> = s.chars().map(|x| {
+//         if special.contains(x) {
+//             return format!("\\{}", x)
+//         } else {
+//             return x.to_string()
+//         }
+//     }).collect();
+//     return v.join("")
+// }
 
 impl Wildcard {
     pub fn new(pattern: String) -> Wildcard {
@@ -821,41 +829,41 @@ impl Wildcard {
         }
     }
 
-    fn regexp(&self) -> String {
-        let any = '%';
+    // fn regexp(&self) -> String {
+    //     let any = '%';
 
-        let mut pattern = quote_meta(&self.pattern);
+    //     let mut pattern = quote_meta(&self.pattern);
         
-        if !pattern.starts_with(any) {
-            pattern = format!("^{}", pattern);
-        } else {
-            pattern = pattern.trim_start_matches(any).to_string();
-        }
+    //     if !pattern.starts_with(any) {
+    //         pattern = format!("^{}", pattern);
+    //     } else {
+    //         pattern = pattern.trim_start_matches(any).to_string();
+    //     }
         
-        if !pattern.ends_with(any) {
-            pattern = format!("{}$", pattern);
-        } else {
-            pattern = pattern.trim_end_matches(any).to_string();
-        }
+    //     if !pattern.ends_with(any) {
+    //         pattern = format!("{}$", pattern);
+    //     } else {
+    //         pattern = pattern.trim_end_matches(any).to_string();
+    //     }
 
-        pattern = pattern.replace(any, ".*");
-        pattern = pattern.replace("\\?", ".");
+    //     pattern = pattern.replace(any, ".*");
+    //     pattern = pattern.replace("\\?", ".");
 
-        return pattern
-    }
+    //     return pattern
+    // }
 }
 
 impl ValueFilter for Wildcard {
     fn build_iterator(&self, qs: Rc<RefCell<dyn QuadStore>>, it: Rc<RefCell<dyn iterator::Shape>>) -> Rc<RefCell<dyn iterator::Shape>> {
         if self.pattern.is_empty() {
             return iterator::Null::new()
-        } else if self.pattern.trim_matches('%').is_empty() {
+        } else if self.pattern.trim_matches('*').is_empty() {
             return it
         }
 
-        let re = Regex::new(&self.regexp()).unwrap();
+        let wm = WildMatch::new(&self.pattern);
 
-        iterator::value_filter::RegexValueFilter::new(it, qs, re, true)
+        iterator::value_filter::WildcardValueFilter::new(it, qs, wm)
     }
 }
 

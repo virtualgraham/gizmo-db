@@ -6,16 +6,57 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use super::super::quad::QuadStore;
 use super::super::number::Number;
- use regex::Regex; // 
+use wildmatch::WildMatch;
+
+#[cfg(feature = "regex")]
+use regex::Regex;
+
+
+
+pub struct WildcardValueFilter {
+    re: WildMatch,
+}
+
+
+impl WildcardValueFilter {
+    pub fn new(sub: Rc<RefCell<dyn Shape>>, qs: Rc<RefCell<dyn QuadStore>>, re: WildMatch) -> Rc<RefCell<ValueFilter>> {
+        ValueFilter::new(
+            qs, 
+            sub, 
+            Rc::new(WildcardValueFilter {
+                re
+            })
+        )
+    }
+}
+
+
+impl ValueFilterFunction for WildcardValueFilter {
+
+    fn filter(&self, qval: Value) -> Result<bool, String> {
+        match qval {
+            Value::String(s) => {
+                Ok(self.re.is_match(&s))
+            },
+            Value::IRI(s) => {
+                Ok(self.re.is_match(&s))
+            },
+            _ => { return Ok(false) }
+        }
+    }
+
+}
 
 
 
 
+#[cfg(feature = "regex")]
 pub struct RegexValueFilter {
     re: Regex,
     iri: bool
 }
 
+#[cfg(feature = "regex")]
 impl RegexValueFilter {
     pub fn new(sub: Rc<RefCell<dyn Shape>>, qs: Rc<RefCell<dyn QuadStore>>, re: Regex, iri: bool) -> Rc<RefCell<ValueFilter>> {
         ValueFilter::new(
@@ -29,6 +70,7 @@ impl RegexValueFilter {
     }
 }
 
+#[cfg(feature = "regex")]
 impl ValueFilterFunction for RegexValueFilter {
 
     fn filter(&self, qval: Value) -> Result<bool, String> {

@@ -826,6 +826,7 @@ pub fn gte<V: Into<Value>>(v: V) -> Rc<dyn shape::ValueFilter> {
     Rc::new(shape::Comparison::new(iterator::value_filter::Operator::GTE, v.into()))
 }
 
+#[cfg(feature = "regex")]
 pub fn regex<S: Into<String>>(pattern: S, iri: bool) -> Rc<dyn shape::ValueFilter> {
     Rc::new(shape::Regexp::new(pattern.into(), iri))
 }

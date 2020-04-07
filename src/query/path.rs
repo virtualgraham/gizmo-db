@@ -6,10 +6,9 @@ use crate::query::shape::{Shape, AllNodes, Lookup, IteratorShape, build_iterator
 use std::rc::Rc;
 use std::cell::RefCell;
 use super::morphism;
+
+#[cfg(feature = "standalone")]
 use crate::query::gizmo;
-
-
-
 
 
 
@@ -341,13 +340,12 @@ impl From<Vec<Value>> for Via {
         } else {
             Via::Values(v)
         }
-       
     }
 }
 
+#[cfg(feature = "standalone")]
 impl From<&gizmo::Path> for Via {
     fn from(p: &gizmo::Path) -> Self {
         Via::Path(p.clone().path)
     }
 }
-

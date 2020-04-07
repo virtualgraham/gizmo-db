@@ -1,3 +1,5 @@
+
+#[cfg(feature = "standalone")]
 use gizmo_db::query::gizmo;
 use gizmo_db::graph::quad::Quad;
 
@@ -10,6 +12,7 @@ fn sort_and_compare(a:&mut Vec<String>, b:&mut Vec<String>) -> bool {
     a == b
 }
 
+#[cfg(feature = "standalone")]
 #[test]
 fn simple_query_tests() {
 
@@ -206,7 +209,7 @@ fn simple_query_tests() {
     let mut r:Vec<String> = g
         .v("<bob>")
         .r#in("<follows>", None)
-        .filter(gizmo::like("a?i%e"))
+        .filter(gizmo::like("a?i*e"))
         .iter_values().map(|v| v.to_string()).collect();
 
     let mut f:Vec<String> = vec![

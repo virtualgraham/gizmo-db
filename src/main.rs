@@ -1,15 +1,12 @@
 mod query;
 mod graph;
-
+#[cfg(feature = "standalone")]
 use query::gizmo;
 use graph::quad::Quad;
 
 
 
-
-
-
-
+#[cfg(feature = "standalone")]
 fn main() {
  
     let simple_graph = gizmo::new_memory_graph();
@@ -82,4 +79,10 @@ fn main() {
 
     // println!("r: {:?}", r);
 
+}
+
+
+#[cfg(not(feature = "standalone"))]
+fn main() {
+    println!("Not Configured For Standalone");
 }

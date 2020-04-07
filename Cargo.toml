@@ -6,14 +6,15 @@ categories = ["wasm"]
 readme = "README.md"
 edition = "2018"
 
+[features]
+default = ["regex", "standalone"]
+standalone = ["rocksdb"]
+
 [dependencies]
 ordered-float = "1.0"
-
-[dependencies.regex]
-version = "1.3"
-# default-features = false
-# # regex currently requires the standard library, you must re-enable it.
-# features = ["std"]
+wildmatch = "1.0.6"
+rocksdb = { version = "0.13.0", optional = true }
+regex = { version = "1.3", optional = true }
 
 [dev-dependencies]
 maplit = "1.0.2"
