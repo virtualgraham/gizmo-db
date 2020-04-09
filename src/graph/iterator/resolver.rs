@@ -157,7 +157,7 @@ impl Scanner for ResolverNext {
 struct ResolverContains {
     qs: Rc<dyn refs::Namer>,
     order: Vec<Value>,
-    nodes: HashMap<Value, Value>,
+    nodes: HashMap<u64, Value>,
     cached: bool,
     err: Option<String>,
     result: Option<refs::Ref>

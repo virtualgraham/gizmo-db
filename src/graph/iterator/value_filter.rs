@@ -34,7 +34,7 @@ impl WildcardValueFilter {
 impl ValueFilterFunction for WildcardValueFilter {
 
     fn filter(&self, qval: Value) -> Result<bool, String> {
-        match qval {
+        match qval {  
             Value::String(s) => {
                 Ok(self.re.is_match(&s))
             },

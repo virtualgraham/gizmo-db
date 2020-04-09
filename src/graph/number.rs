@@ -98,7 +98,6 @@ impl Debug for Number {
     }
 }
 
-
 #[derive(Copy, Clone, PartialEq, Debug)]
 enum N {
     PosInt(u64),
@@ -107,6 +106,11 @@ enum N {
     /// Always finite.
     Float(OrderedFloat<f64>),
 }
+
+
+
+
+
 
 impl Eq for N {}
 

@@ -6,6 +6,11 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::fmt;
 use std::slice::Iter;
+use std::io::Cursor;
+use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hash;
+use std::hash::Hasher;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Quad {
@@ -16,32 +21,79 @@ pub struct Quad {
 }
 
 
-#[derive(Debug, PartialEq, Clone)]
-#[repr(C)]
-pub enum Direction {
-    Subject,
-    Predicate,
-    Object,
-    Label
-}
+impl Quad {
 
-impl Direction {
-    pub fn iterator() -> Iter<'static, Direction> {
-        static DIRECTIONS: [Direction; 4] = [Direction::Subject, Direction::Predicate, Direction::Object, Direction::Label];
-        DIRECTIONS.iter()
+    pub fn calc_hash(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
     }
 
-    pub fn to_byte(&self) -> i8 {
-        match self {
-            Direction::Subject => 1,
-            Direction::Predicate => 2,
-            Direction::Object => 3,
-            Direction::Label => 4
-        }
-    } 
-}
+    pub fn calc_hash_bytes(&self) -> [u8; 8] {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish().to_be_bytes()
+    }
 
-impl Quad {
+    pub fn encode(&self) -> Vec<u8> {
+        let mut v:Vec<u8> = Vec::new();
+
+        let mut s = self.subject.encode();
+        v.write_u64::<BigEndian>(s.len() as u64).unwrap();
+        v.append(&mut s);
+
+        let mut p = self.predicate.encode();
+        v.write_u64::<BigEndian>(p.len() as u64).unwrap();
+        v.append(&mut p);
+
+        let mut o = self.object.encode();
+        v.write_u64::<BigEndian>(o.len() as u64).unwrap();
+        v.append(&mut o);
+
+        let mut l = self.label.encode();
+        v.write_u64::<BigEndian>(l.len() as u64).unwrap();
+        v.append(&mut l);
+        return v
+    }
+
+    pub fn decode(bytes: &[u8]) -> Quad {
+
+        let mut pos:usize = 0;
+
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+        pos += 8;
+        let s_bytes = &bytes[pos..pos+n];
+        let subject = Value::decode(&s_bytes);
+        pos += n;
+        
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+        pos += 8;
+        let p_bytes = &bytes[pos..pos+n];
+        let predicate = Value::decode(&p_bytes);
+        pos += n;
+
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+        pos += 8;
+        let o_bytes = &bytes[pos..pos+n];
+        let object = Value::decode(&o_bytes);
+        pos += n;
+
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+        pos += 8;
+        let l_bytes = &bytes[pos..pos+n];
+        let label = Value::decode(&l_bytes);
+
+        return Quad {
+            subject,
+            predicate,
+            object,
+            label
+        }
+    }
 
     pub fn set_val(&mut self, dir: &Direction, v: Value) {
         match dir {
@@ -87,6 +139,38 @@ impl fmt::Display for Quad {
         
     }
 }
+
+
+
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Direction {
+    Subject,
+    Predicate,
+    Object,
+    Label
+}
+
+impl Direction {
+
+
+    pub fn iterator() -> Iter<'static, Direction> {
+        static DIRECTIONS: [Direction; 4] = [Direction::Subject, Direction::Predicate, Direction::Object, Direction::Label];
+        DIRECTIONS.iter()
+    }
+
+    pub fn to_byte(&self) -> i8 {
+        match self {
+            Direction::Subject => 1,
+            Direction::Predicate => 2,
+            Direction::Object => 3,
+            Direction::Label => 4
+        }
+    } 
+}
+
+
+
 
 pub struct IgnoreOptions {
     pub ignore_dup: bool,

@@ -97,7 +97,11 @@ fn simple_query_tests() {
         "<bob>".into()
     ];
 
-    assert!(sort_and_compare(&mut r, &mut f));
+     r.sort();
+    f.sort();
+
+    assert_eq!(r, f);
+
 
 
     /////////////////////////
@@ -192,14 +196,17 @@ fn simple_query_tests() {
     let mut r:Vec<String> = g
         .v("<bob>")
         .r#in("<follows>", None)
-        .filter(gizmo::like("al%"))
+        .filter(gizmo::like("al*"))
         .iter_values().map(|v| v.to_string()).collect();
 
     let mut f:Vec<String> = vec![
         "<alice>".into()
     ];
 
-    assert!(sort_and_compare(&mut r, &mut f));
+    r.sort();
+    f.sort();
+
+    assert_eq!(r, f);
 
     
     /////////////////////////
@@ -836,7 +843,10 @@ fn simple_query_tests() {
         "<smart_graph>".into()
     ];
 
-    assert!(sort_and_compare(&mut r, &mut f));
+    r.sort();
+    f.sort();
+
+    assert_eq!(r, f);
 
 
     /////////////////////////

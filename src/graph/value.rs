@@ -1,9 +1,10 @@
 use std::hash::{Hash, Hasher};
-
 use std::borrow::Cow;
 use std::fmt;
-
 use super::number::Number;
+use std::collections::hash_map::DefaultHasher;
+use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
+use std::io::Cursor;
 
 
 #[derive(Debug, PartialEq, Clone)]
@@ -28,15 +29,99 @@ impl Value {
         let s = s.into();
         if s.is_empty() {
             return Value::String(s)
-        } else if s.chars().next().unwrap() == '<' && s.chars().last().unwrap() == '>' {
+        } else if s.starts_with('<') && s.ends_with('>') {
             let v = &s[1..s.len()-1];
             Value::IRI(v.to_string())
         } else {
             Value::String(s)
         }
     }
-}
 
+    pub fn calc_hash(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
+    }
+
+    pub fn calc_hash_bytes(&self) -> [u8; 8] {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish().to_be_bytes()
+    }
+
+    pub fn encode(&self) -> Vec<u8> {
+        match self {
+            Value::None => vec![0u8],
+            Value::Null => vec![1u8],
+            Value::Bool(b) => if *b { vec![2u8] } else { vec![3u8] },
+            Value::Number(n) => {
+                let mut bs = vec![0u8; 9];
+
+                if n.is_f64() {
+
+                    let i = n.as_f64().unwrap();
+                    bs[0] = 4u8;
+                    bs[1..].as_mut().write_f64::<BigEndian>(i);
+                    
+                } else if n.is_u64() {
+
+                    let i = n.as_u64().unwrap();
+                    bs[0] = 5u8;
+                    bs[1..].as_mut().write_u64::<BigEndian>(i);
+
+                } else if n.is_i64() {
+
+                    let i = n.as_i64().unwrap();
+                    bs[0] = 6u8;
+                    bs[1..].as_mut().write_i64::<BigEndian>(i);
+
+                }
+
+                return bs.to_vec()
+            },
+            Value::IRI(s) => {
+                let mut bs = vec![7u8];
+                bs.extend_from_slice(s.as_bytes());
+                return bs;
+            },
+            Value::String(s) => {
+                let mut bs = vec![8u8];
+                bs.extend_from_slice(s.as_bytes());
+                return bs;
+            },
+        }
+    }
+
+    pub fn decode(bytes: &[u8]) -> Value {
+        if bytes[0] == 1u8 {
+            return Value::Null
+        } else if bytes[0] == 2u8 {
+            return Value::Bool(true)
+        } else if bytes[0] == 3u8 {
+            return Value::Bool(false)
+        } else if bytes[0] == 4u8 {
+            let mut rdr = Cursor::new(&bytes[1..]);
+            let n = rdr.read_f64::<BigEndian>().unwrap();
+            return Value::Number(Number::from_f64(n).unwrap())
+        } else if bytes[0] == 5u8 {
+            let mut rdr = Cursor::new(&bytes[1..]);
+            let n = rdr.read_u64::<BigEndian>().unwrap();
+            return Value::Number(n.into())
+        } else if bytes[0] == 6u8 {
+            let mut rdr = Cursor::new(&bytes[1..]);
+            let n = rdr.read_i64::<BigEndian>().unwrap();
+            return Value::Number(n.into())
+        } else if bytes[0] == 7u8 {
+            let s = std::str::from_utf8(&bytes[1..]).unwrap();
+            return Value::IRI(s.into())
+        } else if bytes[0] == 8u8 {
+            let s = std::str::from_utf8(&bytes[1..]).unwrap();
+            return Value::String(s.into())
+        } else {
+            return Value::None
+        }
+    }
+}
 
 
 impl fmt::Display for Value {
@@ -54,25 +139,33 @@ impl fmt::Display for Value {
 }
 
 
-// TODO: implement better hash and partialeq for Value
-
 impl Eq for Value {}
 
 impl Hash for Value {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        if let Value::None = self {
-            "Value::Undefined".hash(state);
-        } else if let Value::Null = self {
-            "Value::Null".hash(state);
-        } else if let Value::Bool(b) = self {
-            "Value::Bool".hash(state);
-            b.hash(state);
-        } else if let Value::Number(n) = self {
-            "Value::Number".hash(state);
-            n.hash(state);
-        } else if let Value::String(s) = self {
-            "Value::String".hash(state);
-            s.hash(state);
+        match self {
+            Value::None => {
+                "Value::Undefined".hash(state);
+            },
+            Value::Null => {
+                "Value::Null".hash(state);
+            },
+            Value::Bool(b) => {
+                "Value::Bool".hash(state);
+                b.hash(state);
+            },
+            Value::Number(n) => {
+                "Value::Number".hash(state);
+                n.hash(state);
+            },
+            Value::IRI(s) => {
+                "Value::IRI".hash(state);
+                s.hash(state);
+            },
+            Value::String(s) => {
+                "Value::String".hash(state);
+                s.hash(state);
+            }
         }
     }
 }

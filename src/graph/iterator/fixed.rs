@@ -133,7 +133,7 @@ impl Scanner for FixedNext {
 
 struct FixedContains {
     values: Rc<RefCell<Vec<refs::Ref>>>,
-    keys: Vec<Value>,
+    keys: Vec<u64>,
     result: Option<refs::Ref>
 }
 
@@ -181,7 +181,7 @@ impl Index for FixedContains {
     fn contains(&mut self, v:&refs::Ref) -> bool {
         for (i, x) in self.keys.iter().enumerate() {
             if let Some(k) = v.key() {
-                if *x == *k {
+                if *x == k {
                     self.result = Some(self.values.borrow()[i].clone());
                     return true
                 }

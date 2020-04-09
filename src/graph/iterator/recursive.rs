@@ -98,11 +98,11 @@ struct RecursiveNext {
     err: Option<String>,
 
     morphism: Rc<dyn Morphism>,
-    seen: HashMap<Value, SeenAt>,
+    seen: HashMap<u64, SeenAt>,
     next_it: Rc<RefCell<dyn Scanner>>,
     depth: i32,
     max_depth: i32,
-    path_map: HashMap<Value, Vec<HashMap<String, refs::Ref>>>,
+    path_map: HashMap<u64, Vec<HashMap<String, refs::Ref>>>,
     path_index: usize,
     contains_value: Option<refs::Ref>,
     depth_tags: Vec<String>,
@@ -138,7 +138,7 @@ impl RecursiveNext {
 
         if let Some(k) = val.key() {
 
-            if let Some(at) = self.seen.get(k) {
+            if let Some(at) = self.seen.get(&k) {
 
                 let mut at = at;
 
@@ -187,7 +187,7 @@ impl Base for RecursiveNext {
         if let Some(cv) = &self.contains_value {
             let key = cv.key();
             if let Some(ky) = key {
-                let paths = self.path_map.get(ky);
+                let paths = self.path_map.get(&ky);
                 if paths.is_some() && !paths.unwrap().is_empty() {
                     for (k, v) in &paths.unwrap()[self.path_index] {
                         tags.insert(k.clone(), v.clone());
@@ -217,7 +217,7 @@ impl Base for RecursiveNext {
         };
 
         let a = self.path_index + 1;
-        let b = self.path_map.get(key).unwrap().len();
+        let b = self.path_map.get(&key).unwrap().len();
         if a >= b {
             return false
         }

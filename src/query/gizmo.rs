@@ -4,6 +4,7 @@ use super::shape::Shape;
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::graph::quad::{QuadStore, QuadWriter, IgnoreOptions, Quad};
+use crate::graph::graphmock;
 use crate::graph::memstore;
 use crate::graph::value::Value;
 use crate::graph::iterator;

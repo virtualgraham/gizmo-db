@@ -1,6 +1,6 @@
 use super::number::Number;
 use super::value::Value;
-use super::quad::Quad;
+use super::quad::{Quad, Direction};
 
 
 
@@ -40,30 +40,48 @@ pub trait Namer {
 
 pub fn pre_fetched(v: Value) -> Ref {
     Ref {
-        k: v.clone(),
+        k: Some(v.calc_hash()),
         content: Content::Value(v),
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Primitive {
+    subject: u64, 
+    predicate: u64,
+    object: u64,
+    label: u64,
+}
 
+impl Primitive {
+    pub fn get_direction(&self, dir: Direction) -> u64 {
+        match dir {
+            Direction::Subject => self.subject,
+            Direction::Predicate => self.predicate,
+            Direction::Object => self.object,
+            Direction::Label => self.label
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Content {
     None,
     Value(Value),
-    Quad(Quad)
+    Quad(Quad),
+    Primitive(Primitive)
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Ref {
-    pub k: Value,
+    pub k: Option<u64>,
     pub content: Content
 }
 
 impl Ref {
     pub fn none() -> Ref {
         Ref {
-            k: Value::None,
+            k: None,
             content: Content::None
         }
     }
@@ -71,17 +89,17 @@ impl Ref {
     // a Ref with key Value::None is used to refer to an exsisting quad but the direction is unassigned
     // this is often the case with the label direction
     // using this method helps to ensure we are checking and handling this scenerio properly
-    pub fn key(&self) -> Option<&Value> {
-        if let Value::None = self.k {
+    pub fn key(&self) -> Option<u64> {
+        if let Some(0) = self.k {
             return None
         }
-        return Some(&self.k)
+        return self.k
     }
 
     pub fn new_i64_node(v: i64) -> Ref {
         let value = Value::Number(Number::from(v));
         Ref {
-            k: value.clone(),
+            k: Some(value.calc_hash()),
             content: Content::Value(value),
         }
     }

@@ -11,12 +11,12 @@ use std::collections::BTreeSet;
 use std::ops::Bound::{Excluded, Unbounded};
 
 pub struct MemStoreIterator {
-    quad_ids: Rc<BTreeSet<i64>>,
+    quad_ids: Rc<BTreeSet<u64>>,
     d: Direction
 }
 
 impl MemStoreIterator {
-    pub fn new(quad_ids: Rc<BTreeSet<i64>>, d: Direction) -> Rc<RefCell<MemStoreIterator>> {
+    pub fn new(quad_ids: Rc<BTreeSet<u64>>, d: Direction) -> Rc<RefCell<MemStoreIterator>> {
         Rc::new(RefCell::new(MemStoreIterator {
             quad_ids,
             d
@@ -68,14 +68,14 @@ impl Shape for MemStoreIterator {
 
 
 pub struct MemStoreIteratorNext {
-    quad_ids: Rc<BTreeSet<i64>>,
+    quad_ids: Rc<BTreeSet<u64>>,
     d: Direction,
-    cur: Option<i64>,
+    cur: Option<u64>,
     done: bool
 }
 
 impl MemStoreIteratorNext {
-    pub fn new(quad_ids: Rc<BTreeSet<i64>>, d: Direction) -> Rc<RefCell<MemStoreIteratorNext>> {
+    pub fn new(quad_ids: Rc<BTreeSet<u64>>, d: Direction) -> Rc<RefCell<MemStoreIteratorNext>> {
         
         Rc::new(RefCell::new(MemStoreIteratorNext {
             quad_ids,
@@ -93,7 +93,7 @@ impl Base for MemStoreIteratorNext {
     fn result(&self) -> Option<Ref> {
         match self.cur {
             Some(quad_id) => Some(Ref {
-                k: Value::from(quad_id),
+                k: Some(quad_id),
                 content: Content::None
             }),
             None => None
@@ -147,13 +147,13 @@ impl Scanner for MemStoreIteratorNext {
 
 
 pub struct MemStoreIteratorContains {
-    quad_ids: Rc<BTreeSet<i64>>,
+    quad_ids: Rc<BTreeSet<u64>>,
     d: Direction,
-    cur: Option<i64>
+    cur: Option<u64>
 }
 
 impl MemStoreIteratorContains {
-    pub fn new(quad_ids: Rc<BTreeSet<i64>>, d: Direction) -> Rc<RefCell<MemStoreIteratorContains>> {
+    pub fn new(quad_ids: Rc<BTreeSet<u64>>, d: Direction) -> Rc<RefCell<MemStoreIteratorContains>> {
         Rc::new(RefCell::new(MemStoreIteratorContains {
             quad_ids,
             d,
@@ -168,7 +168,7 @@ impl Base for MemStoreIteratorContains {
     fn result(&self) -> Option<Ref> {
         match self.cur {
             Some(c) => Some(Ref {
-                k: Value::from(c),
+                k: Some(c),
                 content: Content::None
             }),
             None => None
@@ -190,8 +190,7 @@ impl Base for MemStoreIteratorContains {
 
 impl Index for MemStoreIteratorContains {
     fn contains(&mut self, v:&Ref) -> bool {
-        let id = if let Some(k) = v.key() { k.as_i64() } else { None };
-        match id {
+        match v.key() {
             Some(i) => {
                 let c = self.quad_ids.contains(&i);
                 if c {

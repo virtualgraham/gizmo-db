@@ -72,7 +72,7 @@ struct UniqueNext {
     sub_it: Rc<RefCell<dyn Scanner>>,
     result: Option<refs::Ref>,
     err: Option<String>,
-    seen: HashSet<Value>
+    seen: HashSet<u64>
 }
 
 impl UniqueNext {
@@ -122,7 +122,7 @@ impl Scanner for UniqueNext {
         while self.sub_it.borrow_mut().next() {
             let curr = self.sub_it.borrow().result();
             let key = curr.as_ref().unwrap().key().clone();
-            if key.is_some() && !self.seen.contains(key.unwrap()) {
+            if key.is_some() && !self.seen.contains(key.as_ref().unwrap()) {
                 self.result = curr.clone();
                 self.seen.insert(key.unwrap().clone());
                 return true

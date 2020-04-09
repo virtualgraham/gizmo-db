@@ -90,7 +90,7 @@ pub struct MaterializeResult {
 struct MaterializeNext {
     sub: Rc<RefCell<dyn Shape>>,
     next: Rc<RefCell<dyn Scanner>>,
-    contains_map: HashMap<Value, usize>,
+    contains_map: HashMap<u64, usize>,
     values: Vec<Vec<MaterializeResult>>,
     index: Option<usize>,
     sub_index: Option<usize>,
@@ -128,7 +128,7 @@ impl MaterializeNext {
             let val = id.key();
 
             if let Some(v) = val {
-                if !self.contains_map.contains_key(v) {
+                if !self.contains_map.contains_key(&v) {
                     self.contains_map.insert(v.clone(), self.values.len());
                     self.values.push(Vec::new());
                 }
@@ -363,7 +363,7 @@ impl Index for MaterializeContains {
         }
 
         let i = if let Some(k) = v.key() {
-            self.next.borrow_mut().contains_map.get(k).map(|x| x.clone())
+            self.next.borrow_mut().contains_map.get(&k).map(|x| x.clone())
         } else {
             None
         };

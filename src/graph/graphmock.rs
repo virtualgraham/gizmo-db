@@ -21,7 +21,7 @@ impl Store {
 
 fn quad_value(q: Quad) -> Ref {
     Ref {
-        k: Value::String(q.to_string()),
+        k: Some(q.calc_hash()),
         content: Content::Quad(q)
     }
 }
@@ -39,13 +39,12 @@ impl Namer for Store {
 
     
     fn name_of(&self, key: &Ref) -> Option<Value> {
-        return if let Some(k) = key.key() {
-            Some(k.clone())
+        return if let Content::Value(v) = &key.content {
+            Some(v.clone())
         } else {
             None
         }
     }
-
 
 }
 
@@ -63,7 +62,7 @@ impl QuadStore for Store {
         let fixed = Fixed::new(vec![]);
         for q in &self.data {
             if let Some(k) = r.key() {
-                if q.get(d) == k {
+                if q.get(d).calc_hash() == k {
                     fixed.borrow_mut().add(quad_value(q.clone()));
                 }
             }
@@ -80,7 +79,7 @@ impl QuadStore for Store {
         };
         for q in &self.data {
             if let Some(k) = r.key() {
-                if q.get(d) == k {
+                if q.get(d).calc_hash() == k {
                     sz.value += 1;
                 }
             }
@@ -164,7 +163,7 @@ impl QuadStore for Store {
         let fixed = Fixed::new(vec![]);
         for q in &self.data {
             fixed.borrow_mut().add(Ref {
-                k: Value::String(q.to_string()),
+                k: Some(q.calc_hash()),
                 content: Content::Quad(q.clone())
             });
         }

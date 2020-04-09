@@ -13,12 +13,12 @@ use std::sync::{Arc, RwLock};
 
 pub struct MemStoreAllIterator {
     all: Arc<RwLock<dyn PrimStore>>,
-    maxid: i64,
+    maxid: u64,
     nodes: bool
 }
 
 impl MemStoreAllIterator {
-    pub fn new(all: Arc<RwLock<dyn PrimStore>>, maxid: i64, nodes: bool) -> Rc<RefCell<MemStoreAllIterator>> {
+    pub fn new(all: Arc<RwLock<dyn PrimStore>>, maxid: u64, nodes: bool) -> Rc<RefCell<MemStoreAllIterator>> {
   
         Rc::new(RefCell::new(MemStoreAllIterator {
             all,
@@ -77,16 +77,16 @@ impl Shape for MemStoreAllIterator {
 
 pub struct MemStoreAllIteratorNext {
     all: Arc<RwLock<dyn PrimStore>>,
-    maxid: i64,
+    maxid: u64,
     nodes: bool,
     done: bool,
-    cur: Option<i64>
+    cur: Option<u64>
 }
 
 
 
 impl MemStoreAllIteratorNext {
-    pub fn new(all: Arc<RwLock<dyn PrimStore>>, maxid: i64, nodes: bool) -> Rc<RefCell<MemStoreAllIteratorNext>> {
+    pub fn new(all: Arc<RwLock<dyn PrimStore>>, maxid: u64, nodes: bool) -> Rc<RefCell<MemStoreAllIteratorNext>> {
         Rc::new(RefCell::new(MemStoreAllIteratorNext {
             all,
             maxid,
@@ -103,7 +103,7 @@ impl Base for MemStoreAllIteratorNext {
     fn result(&self) -> Option<Ref> {
         match self.cur {
             Some(c) => Some(Ref {
-                k: Value::from(c),
+                k: Some(c),
                 content: Content::None
             }),
             None => None
@@ -133,7 +133,7 @@ impl Scanner for MemStoreAllIteratorNext {
 
         // TODO: This is ridiculous, there has to be a way to just use a single iterator.
 
-        let lam = |(k, v):&(&i64, &Primitive)| {
+        let lam = |(k, v):&(&u64, &Primitive)| {
 
             let is_node = v.is_node();
 
@@ -177,14 +177,14 @@ impl Scanner for MemStoreAllIteratorNext {
 
 pub struct MemStoreAllIteratorContains {
     all: Arc<RwLock<dyn PrimStore>>,
-    maxid: i64,
+    maxid: u64,
     nodes: bool,
-    cur: Option<i64>,
+    cur: Option<u64>,
     done: bool
 }
 
 impl MemStoreAllIteratorContains {
-    pub fn new(all: Arc<RwLock<dyn PrimStore>>, maxid: i64, nodes: bool) -> Rc<RefCell<MemStoreAllIteratorContains>> {
+    pub fn new(all: Arc<RwLock<dyn PrimStore>>, maxid: u64, nodes: bool) -> Rc<RefCell<MemStoreAllIteratorContains>> {
         Rc::new(RefCell::new(MemStoreAllIteratorContains {
             all,
             maxid,
@@ -201,7 +201,7 @@ impl Base for MemStoreAllIteratorContains {
     fn result(&self) -> Option<Ref> {
         match self.cur {
             Some(c) => Some(Ref {
-                k: Value::from(c),
+                k: Some(c),
                 content: Content::None
             }),
             None => None
@@ -230,7 +230,7 @@ impl Index for MemStoreAllIteratorContains {
 
         let all = self.all.read().unwrap();
 
-        let id = if let Some(k) = v.key() { k.as_i64() } else { None };
+        let id = v.key();
 
         // TODO: if id > maxid
         match id {

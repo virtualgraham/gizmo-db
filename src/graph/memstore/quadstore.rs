@@ -17,12 +17,12 @@ use std::ops::Bound;
 
 
 pub struct InternalMemStore {
-    vals: HashMap<Value, i64>, // value to value_id
-    quads: HashMap<InternalQuad, i64>, // quad to quad_id
-    prim: BTreeMap<i64, Primitive>, // value_id or quad_id to value or quad
+    vals: HashMap<Value, u64>, // value to value_id
+    quads: HashMap<InternalQuad, u64>, // quad to quad_id
+    prim: BTreeMap<u64, Primitive>, // value_id or quad_id to value or quad
     index: QuadDirectionIndex, // value_id and direction to quad id
-    last: i64, // keeps track of ids for values and quads
-    horizon: i64 // keeps track of ids for transactions
+    last: u64, // keeps track of ids for values and quads
+    horizon: u64 // keeps track of ids for transactions
 }
 
 impl InternalMemStore {
@@ -39,7 +39,7 @@ impl InternalMemStore {
     }
 
 
-    fn add_primitive(&mut self, mut p: Primitive) -> i64 {
+    fn add_primitive(&mut self, mut p: Primitive) -> u64 {
         self.last += 1;
         let id = self.last;
         p.id = id;
@@ -49,7 +49,7 @@ impl InternalMemStore {
     }
 
 
-    fn resolve_val(&mut self, v: &Value, add: bool) -> Option<i64> {
+    fn resolve_val(&mut self, v: &Value, add: bool) -> Option<u64> {
         if let Value::None = v {
             return None
         }
@@ -95,7 +95,7 @@ impl InternalMemStore {
     }
 
 
-    fn find_quad(&mut self, q: &Quad) -> Option<i64> {
+    fn find_quad(&mut self, q: &Quad) -> Option<u64> {
         let quad = self.resolve_quad(q, false);
         if let Some(q) = quad {
             if let Some(id) = self.quads.get(&q) {
@@ -138,7 +138,7 @@ impl InternalMemStore {
     }
 
 
-    fn delete(&mut self, id: i64) -> bool {
+    fn delete(&mut self, id: u64) -> bool {
         let mut quad:Option<InternalQuad> = None;
  
         if let Some(p) = self.prim.get(&id) {
@@ -167,7 +167,7 @@ impl InternalMemStore {
     }
 
 
-    fn add_quad(&mut self, q: Quad) -> i64 {
+    fn add_quad(&mut self, q: Quad) -> u64 {
         // get value_ids for each direction
         let p = self.resolve_quad_default(&q, false);
 
@@ -198,7 +198,7 @@ impl InternalMemStore {
     }
 
 
-    fn lookup_val(&self, id: &i64) -> Option<Value> {
+    fn lookup_val(&self, id: &u64) -> Option<Value> {
         match self.prim.get(id) {
             Some(p) => {
                 match &p.content {
@@ -213,11 +213,7 @@ impl InternalMemStore {
 
     fn internal_quad(&self, r: &Ref) -> Option<InternalQuad> {
         let key = if let Some(k) = r.key() { 
-            if let Some(i) = k.as_i64().as_ref() {
-                self.prim.get(i)
-            } else {
-                None
-            }
+            self.prim.get(&k)
         } else { 
             None 
         };
@@ -260,9 +256,9 @@ impl InternalMemStore {
 
 pub trait PrimStore {
     fn len(&self) -> usize;
-    fn get(&self, key: &i64) -> Option<&Primitive>;
-    fn iter(&self) -> std::collections::btree_map::Iter<'_, i64, Primitive>;
-    fn range(&self, bounds: (Bound<i64>, Bound<i64>)) -> std::collections::btree_map::Range<'_, i64, Primitive>;
+    fn get(&self, key: &u64) -> Option<&Primitive>;
+    fn iter(&self) -> std::collections::btree_map::Iter<'_, u64, Primitive>;
+    fn range(&self, bounds: (Bound<u64>, Bound<u64>)) -> std::collections::btree_map::Range<'_, u64, Primitive>;
 }
 
 impl PrimStore for InternalMemStore {
@@ -270,15 +266,15 @@ impl PrimStore for InternalMemStore {
         self.prim.len()
     }
 
-    fn get(&self, key: &i64) -> Option<&Primitive> {
+    fn get(&self, key: &u64) -> Option<&Primitive> {
         self.prim.get(key)
     }
 
-    fn iter(&self) -> std::collections::btree_map::Iter<'_, i64, Primitive> {
+    fn iter(&self) -> std::collections::btree_map::Iter<'_, u64, Primitive> {
         self.prim.iter()
     }
 
-    fn range(&self, range: (Bound<i64>, Bound<i64>)) -> std::collections::btree_map::Range<'_, i64, Primitive> {
+    fn range(&self, range: (Bound<u64>, Bound<u64>)) -> std::collections::btree_map::Range<'_, u64, Primitive> {
         self.prim.range(range)
     }
 }
@@ -305,7 +301,7 @@ impl Namer for MemStore {
         let id = datastore.vals.get(v);
         match id {
             Some(i) => Some(Ref {
-                k: Value::from(*i),
+                k: Some(*i),
                 content: Content::None
             }),
             None => None
@@ -319,9 +315,7 @@ impl Namer for MemStore {
             return Some(v.clone())
         }
 
-        let n = if let Some(k) = key.key() { k.as_i64() } else { None };
-
-        if let Some(i) = n {
+        if let Some(i) = key.key() {
             return datastore.lookup_val(&i)
         } else {
             return None
@@ -343,10 +337,8 @@ impl QuadStore for MemStore {
 
     fn quad_iterator(&self, d: &Direction, r: &Ref) -> Rc<RefCell<dyn Shape>> {
         let datastore = self.store.read().unwrap();
-        
-        let id = if let Some(k) = r.key() { k.as_i64() } else { None };
-        
-        if let Some(i) = id {
+ 
+        if let Some(i) = r.key() {
 
             let quad_ids = datastore.index.get(d, &i);
 
@@ -361,9 +353,7 @@ impl QuadStore for MemStore {
     fn quad_iterator_size(&self, d: &Direction, r: &Ref) -> Result<Size, String> {
         let datastore = self.store.read().unwrap();
 
-        let id = if let Some(k) = r.key() { k.as_i64() } else { None };
-
-        if let Some(i) = id {
+        if let Some(i) = r.key() {
             let quad_ids = datastore.index.get(d, &i);
             return Ok(Size{value: quad_ids.len() as i64, exact: true})
         }
@@ -384,7 +374,7 @@ impl QuadStore for MemStore {
                     return Some(Ref::none())
                 }
                 return Some(Ref {
-                    k: Value::from(id),
+                    k: Some(id),
                     content: Content::None
                 })
             }
@@ -470,12 +460,12 @@ impl QuadStore for MemStore {
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct QuadDirectionKey {
     direction: i8,    
-    value_id: i64,
-    quad_id: i64,
+    value_id: u64,
+    quad_id: u64,
 }
 
 impl QuadDirectionKey {
-    pub fn new(value_id: i64, direction: &Direction, quad_id: i64) -> QuadDirectionKey {
+    pub fn new(value_id: u64, direction: &Direction, quad_id: u64) -> QuadDirectionKey {
         QuadDirectionKey {
             direction: direction.to_byte(),
             value_id,
@@ -497,18 +487,18 @@ impl QuadDirectionIndex {
     }
 
     // get all quad_ids that have the given value_id at the given location
-    fn get(&self, d: &Direction, value_id: &i64) -> BTreeSet<i64> {
+    fn get(&self, d: &Direction, value_id: &u64) -> BTreeSet<u64> {
         let lower_bound = QuadDirectionKey::new(value_id.clone(), d, 0);
         self.index.range(lower_bound..).take_while(|k| {
             k.value_id == *value_id
         }).map(|k| k.quad_id).collect()
     }
 
-    fn insert(&mut self, value_id: i64, d: &Direction, quad_id: i64) {
+    fn insert(&mut self, value_id: u64, d: &Direction, quad_id: u64) {
         self.index.insert(QuadDirectionKey::new(value_id, d, quad_id));
     }
 
-    fn remove(&mut self, value_id: &i64, d: &Direction, quad_id: &i64) {
+    fn remove(&mut self, value_id: &u64, d: &Direction, quad_id: &u64) {
         self.index.remove(&QuadDirectionKey::new(value_id.clone(), d, quad_id.clone()));
     }
 }
@@ -520,7 +510,7 @@ pub enum PrimitiveContent {
 }
 
 pub struct Primitive {
-    pub id: i64,
+    pub id: u64,
     pub refs: i32,
     pub content: PrimitiveContent
 }
@@ -569,16 +559,16 @@ impl Primitive {
 
 #[derive(PartialEq, Hash, Clone, Debug)]
 pub struct InternalQuad {
-    s: i64,
-    p: i64,
-    o: i64,
-    l: i64,
+    s: u64,
+    p: u64,
+    o: u64,
+    l: u64,
 }
 
 impl Eq for InternalQuad {}
 
 impl InternalQuad {
-    fn dir(&self, dir: &Direction) -> i64 {
+    fn dir(&self, dir: &Direction) -> u64 {
         match dir {
             Direction::Subject => self.s,
             Direction::Predicate => self.p,
@@ -587,7 +577,7 @@ impl InternalQuad {
         }
     }
 
-    fn set_dir(&mut self, dir: &Direction, vid: i64) {
+    fn set_dir(&mut self, dir: &Direction, vid: u64) {
         match dir {
             Direction::Subject => self.s = vid,
             Direction::Predicate => self.p = vid,
