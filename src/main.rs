@@ -1,19 +1,11 @@
 mod query;
 mod graph;
+
 #[cfg(feature = "standalone")]
 use query::gizmo;
 use graph::quad::Quad;
 use graph::value::Value;
 
-
-
-
-fn main() {
-    let v_none = Value::None;
-    let e = v_none.encode();
-    let s = std::str::from_utf8(&e).unwrap();
-    println!("{}", s)
-}
 
 
 // #[cfg(feature = "standalone")]
@@ -93,6 +85,6 @@ fn main() {
 
 
 // #[cfg(not(feature = "standalone"))]
-// fn main() {
-//     println!("Not Configured For Standalone");
-// }
+fn main() {
+    println!("Not Configured For Standalone");
+}

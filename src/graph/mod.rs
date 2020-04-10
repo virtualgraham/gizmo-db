@@ -9,5 +9,5 @@ pub mod transaction;
 pub mod memstore;
 pub mod number;
 
-// #[cfg(feature = "standalone")]
-// pub mod rocksdb;
+#[cfg(feature = "standalone")]
+pub mod rocksdb;

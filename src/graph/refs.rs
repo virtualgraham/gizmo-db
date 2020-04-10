@@ -45,31 +45,30 @@ pub fn pre_fetched(v: Value) -> Ref {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Primitive {
-    subject: u64, 
-    predicate: u64,
-    object: u64,
-    label: u64,
-}
+// #[derive(Debug, PartialEq, Clone)]
+// pub struct Primitive {
+//     subject: u64, 
+//     predicate: u64,
+//     object: u64,
+//     label: u64,
+// }
 
-impl Primitive {
-    pub fn get_direction(&self, dir: Direction) -> u64 {
-        match dir {
-            Direction::Subject => self.subject,
-            Direction::Predicate => self.predicate,
-            Direction::Object => self.object,
-            Direction::Label => self.label
-        }
-    }
-}
+// impl Primitive {
+//     pub fn get_direction(&self, dir: Direction) -> u64 {
+//         match dir {
+//             Direction::Subject => self.subject,
+//             Direction::Predicate => self.predicate,
+//             Direction::Object => self.object,
+//             Direction::Label => self.label
+//         }
+//     }
+// }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Content {
     None,
     Value(Value),
-    Quad(Quad),
-    Primitive(Primitive)
+    Quad(Quad)
 }
 
 #[derive(Debug, PartialEq, Clone)]

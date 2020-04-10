@@ -35,65 +35,65 @@ impl Quad {
         s.finish().to_be_bytes()
     }
 
-    pub fn encode(&self) -> Vec<u8> {
-        let mut v:Vec<u8> = Vec::new();
+    // pub fn encode(&self) -> Vec<u8> {
+    //     let mut v:Vec<u8> = Vec::new();
 
-        let mut s = self.subject.encode();
-        v.write_u64::<BigEndian>(s.len() as u64).unwrap();
-        v.append(&mut s);
+    //     let mut s = self.subject.encode();
+    //     v.write_u64::<BigEndian>(s.len() as u64).unwrap();
+    //     v.append(&mut s);
 
-        let mut p = self.predicate.encode();
-        v.write_u64::<BigEndian>(p.len() as u64).unwrap();
-        v.append(&mut p);
+    //     let mut p = self.predicate.encode();
+    //     v.write_u64::<BigEndian>(p.len() as u64).unwrap();
+    //     v.append(&mut p);
 
-        let mut o = self.object.encode();
-        v.write_u64::<BigEndian>(o.len() as u64).unwrap();
-        v.append(&mut o);
+    //     let mut o = self.object.encode();
+    //     v.write_u64::<BigEndian>(o.len() as u64).unwrap();
+    //     v.append(&mut o);
 
-        let mut l = self.label.encode();
-        v.write_u64::<BigEndian>(l.len() as u64).unwrap();
-        v.append(&mut l);
-        return v
-    }
+    //     let mut l = self.label.encode();
+    //     v.write_u64::<BigEndian>(l.len() as u64).unwrap();
+    //     v.append(&mut l);
+    //     return v
+    // }
 
-    pub fn decode(bytes: &[u8]) -> Quad {
+    // pub fn decode(bytes: &[u8]) -> Quad {
 
-        let mut pos:usize = 0;
+    //     let mut pos:usize = 0;
 
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
-        pos += 8;
-        let s_bytes = &bytes[pos..pos+n];
-        let subject = Value::decode(&s_bytes);
-        pos += n;
+    //     let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+    //     let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+    //     pos += 8;
+    //     let s_bytes = &bytes[pos..pos+n];
+    //     let subject = Value::decode(&s_bytes);
+    //     pos += n;
         
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
-        pos += 8;
-        let p_bytes = &bytes[pos..pos+n];
-        let predicate = Value::decode(&p_bytes);
-        pos += n;
+    //     let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+    //     let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+    //     pos += 8;
+    //     let p_bytes = &bytes[pos..pos+n];
+    //     let predicate = Value::decode(&p_bytes);
+    //     pos += n;
 
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
-        pos += 8;
-        let o_bytes = &bytes[pos..pos+n];
-        let object = Value::decode(&o_bytes);
-        pos += n;
+    //     let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+    //     let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+    //     pos += 8;
+    //     let o_bytes = &bytes[pos..pos+n];
+    //     let object = Value::decode(&o_bytes);
+    //     pos += n;
 
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
-        pos += 8;
-        let l_bytes = &bytes[pos..pos+n];
-        let label = Value::decode(&l_bytes);
+    //     let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+    //     let n = rdr.read_u64::<BigEndian>().unwrap() as usize;
+    //     pos += 8;
+    //     let l_bytes = &bytes[pos..pos+n];
+    //     let label = Value::decode(&l_bytes);
 
-        return Quad {
-            subject,
-            predicate,
-            object,
-            label
-        }
-    }
+    //     return Quad {
+    //         subject,
+    //         predicate,
+    //         object,
+    //         label
+    //     }
+    // }
 
     pub fn set_val(&mut self, dir: &Direction, v: Value) {
         match dir {
@@ -159,7 +159,7 @@ impl Direction {
         DIRECTIONS.iter()
     }
 
-    pub fn to_byte(&self) -> i8 {
+    pub fn to_byte(&self) -> u8 {
         match self {
             Direction::Subject => 1,
             Direction::Predicate => 2,

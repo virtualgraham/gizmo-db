@@ -459,7 +459,7 @@ impl QuadStore for MemStore {
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct QuadDirectionKey {
-    direction: i8,    
+    direction: u8,    
     value_id: u64,
     quad_id: u64,
 }
