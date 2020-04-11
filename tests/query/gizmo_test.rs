@@ -16,7 +16,7 @@ fn sort_and_compare(a:&mut Vec<String>, b:&mut Vec<String>) -> bool {
 #[test]
 fn simple_query_tests() {
 
-    let simple_graph = gizmo::new_memory_graph();
+    let simple_graph = gizmo::new_rocksdb_graph("gizmo_tests.db");
 
     simple_graph.write(vec![
         Quad::new("<alice>", "<follows>", "<bob>", ()),
@@ -67,21 +67,21 @@ fn simple_query_tests() {
     // use .getLimit
     ///////////////////////
 
-    let mut r:Vec<String> = g
-        .v(None)
-        .iter_values().take(5)
-        .map(|v| v.to_string()).collect();
-    let mut f:Vec<String> = vec![
-        "<alice>".into(),
-        "<bob>".into(),
-        "<follows>".into(),
-        "<fred>".into(),
-        "<status>".into()
-    ];
-    r.sort();
-    f.sort();
+    // let mut r:Vec<String> = g
+    //     .v(None)
+    //     .iter_values().take(5)
+    //     .map(|v| v.to_string()).collect();
+    // let mut f:Vec<String> = vec![
+    //     "<alice>".into(),
+    //     "<bob>".into(),
+    //     "<follows>".into(),
+    //     "<fred>".into(),
+    //     "<status>".into()
+    // ];
+    // r.sort();
+    // f.sort();
 
-    assert_eq!(r, f);
+    // assert_eq!(r, f);
 
 
     /////////////////////////
@@ -1025,7 +1025,10 @@ fn simple_query_tests() {
         "smart_person".into(),
     ];
 
-    assert!(sort_and_compare(&mut r, &mut f));
+    r.sort();
+    f.sort();
+
+    assert_eq!(r, f);
 
 
     /////////////////////////
@@ -1054,6 +1057,9 @@ fn simple_query_tests() {
         "smart_person".into(),
     ];
 
-    assert!(sort_and_compare(&mut r, &mut f));
+    r.sort();
+    f.sort();
+
+    assert_eq!(r, f);
 }
 

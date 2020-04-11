@@ -4,6 +4,7 @@ use super::shape::Shape;
 use std::rc::Rc;
 use std::cell::RefCell;
 use crate::graph::quad::{QuadStore, QuadWriter, IgnoreOptions, Quad};
+use crate::graph::rocksdb;
 use crate::graph::graphmock;
 use crate::graph::memstore;
 use crate::graph::value::Value;
@@ -11,6 +12,21 @@ use crate::graph::iterator;
 use std::collections::HashMap;
 use crate::graph::refs::Ref;
 
+pub fn new_rocksdb_graph(path: &str) -> GraphWrapper {
+    let qs = Rc::new(RefCell::new(rocksdb::quadstore::RocksDB::open(path).unwrap()));
+
+    let s = Rc::new(RefCell::new(Session {
+        qs: qs.clone(),
+        qw: QuadWriter::new(qs.clone(), IgnoreOptions{ignore_dup: true, ignore_missing: true})
+    }));
+
+    let g = Graph::new(s.clone());
+
+    GraphWrapper {
+        graph: g,
+        session: s
+    }
+}
 
 pub fn new_memory_graph() -> GraphWrapper {
     let qs = Rc::new(RefCell::new(memstore::quadstore::MemStore::new()));

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use rocksdb::IteratorMode;
 
-use super::quadstore::{InternalRocksDB, Primitive, primitive_key, META_DATA_QUAD_COUNT_KEY, META_DATA_VALUE_COUNT_KEY};
+use super::quadstore::{InternalRocksDB, Primitive, primitive_key, META_DATA_QUAD_COUNT_KEY, META_DATA_VALUE_COUNT_KEY, PRIMITIVE_KEY_PREFIX};
 
 use std::sync::Arc;
 
@@ -143,7 +143,7 @@ impl Scanner for RocksDbAllIteratorNext {
             self.db.db.iterator(
                 IteratorMode::Start
             ).take_while(|(k,_)| {
-                !k.is_empty() && k[0] == 0
+                !k.is_empty() && k[0] == PRIMITIVE_KEY_PREFIX
             }).filter_map(
                 lam
             ).map(|p| {
@@ -155,7 +155,7 @@ impl Scanner for RocksDbAllIteratorNext {
             self.db.db.iterator(
                 IteratorMode::From(&primitive_key(self.cur.as_ref().unwrap().k.unwrap() + 1), rocksdb::Direction::Forward)
             ).take_while(|(k,_)| {
-                !k.is_empty() && k[0] == 0
+                !k.is_empty() && k[0] == PRIMITIVE_KEY_PREFIX
             }).filter_map(
                 lam
             ).map(|p| {

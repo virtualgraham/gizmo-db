@@ -25,7 +25,7 @@ pub struct InternalRocksDB {
 }
 
 impl InternalRocksDB {
-    fn open(path: String) -> Result<InternalRocksDB, String> {
+    fn open(path: &str) -> Result<InternalRocksDB, String> {
         Ok(InternalRocksDB {
             db: match DB::open_default(path) {
                 Ok(db) => db,
@@ -38,21 +38,25 @@ impl InternalRocksDB {
     // Primitives
 
     fn increment_count(&self, n: i64, key: &[u8; 2]) -> Result<u64, String> {
+
         let mut count = self.get_count(key)?;
 
         if n < 0 {
             let m = n.abs() as u64;
             if m > count {
-                println!("Attempted to set quad count to less than 0");
-                count = 0;
+                return Err("Attempted to set quad count to less than 0".to_string());
             } else {
                 count -= m;
             }
         } else {
-            count += n as u64;
+            if n as u64 > u64::max_value() - count  {
+                return Err("quad count is invalid u64::max_value()".to_string());
+            } else {
+                count += n as u64;
+            }
         }
         
-        let b = n.to_be_bytes();
+        let b = count.to_be_bytes();
 
         self.db.put(key, b)?;
 
@@ -84,9 +88,11 @@ impl InternalRocksDB {
         }
     }
 
+    // Only call this method after you have checked that the primitive does not yet exsist
     fn add_primitive(&self, p: &mut Primitive) -> Result<u64, String> {
         p.refs = 1;
         self.db.put(primitive_key(p.id), p.encode())?;
+
         match p.content {
             PrimitiveContent::Value(_) => {
                 self.increment_count(1, &META_DATA_VALUE_COUNT_KEY)?;
@@ -100,6 +106,7 @@ impl InternalRocksDB {
     
     fn remove_primitive(&self, p: &Primitive) -> Result<(), String> {
         self.db.delete(primitive_key(p.id))?;
+
         match p.content {
             PrimitiveContent::Value(_) => {
                 self.increment_count(-1, &META_DATA_VALUE_COUNT_KEY)?;
@@ -113,9 +120,18 @@ impl InternalRocksDB {
 
     // Quad Direction Index
 
-    fn get_quad_direction(&self, d: &Direction, value_id: &u64) -> BTreeSet<u64> {
-        let lower_bound = quad_direction_key(value_id.clone(), d, 0);
-        self.db.iterator(IteratorMode::From(&lower_bound, rocksdb::Direction::Forward)).map(|(k,_)| decode_quad_direction_key(k).2).collect()
+    fn get_quad_direction(&self, direction: &Direction, value_id: &u64) -> BTreeSet<u64> {
+        let lower_bound = quad_direction_key(value_id.clone(), direction, 0);
+        self.db.iterator(IteratorMode::From(&lower_bound, rocksdb::Direction::Forward))
+        .take_while(|(k,_)| {
+            !k.is_empty() && k[0] == QUAD_DIRECTION_KEY_PREFIX
+        })
+        .map(|(k,_)| decode_quad_direction_key(&k))
+        .take_while(|(v, d, _)| {
+            v == value_id && d == direction
+        })
+        .map(|(_, _, quad_id)| quad_id)
+        .collect()
     }
 
     fn add_quad_direction(&self, value_id: u64, direction: &Direction, quad_id: u64) -> Result<(), String> {
@@ -151,7 +167,7 @@ impl InternalRocksDB {
             if prim.is_some() && add {
                 let mut p = prim.unwrap();
                 p.refs += 1;
-                self.db.put(primitive_key(p.id), p.encode())?; // value
+                self.db.put(primitive_key(p.id), p.encode())?; // update p.refs
             }
             
             return Ok(res)
@@ -330,6 +346,9 @@ impl InternalRocksDB {
         }
         return Ok(q)
     }
+
+
+
 }
 
 
@@ -339,7 +358,7 @@ pub struct RocksDB {
 }
 
 impl RocksDB {
-    pub fn open(path: String) -> Result<RocksDB, String> {
+    pub fn open(path: &str) -> Result<RocksDB, String> {
         Ok(RocksDB {
             store: Arc::new(InternalRocksDB::open(path)?)
         })
@@ -555,11 +574,13 @@ fn quad_direction_key(value_id: u64, direction: &Direction, quad_id: u64) -> Vec
     v
 }
 
-fn decode_quad_direction_key(bytes: Box<[u8]>) -> (u64, u8, u64) {
+fn decode_quad_direction_key(bytes: &[u8]) -> (u64, Direction, u64) {
 
-    let mut pos:usize = 0;
+    let mut pos:usize = 1; // ignore QUAD_DIRECTION_KEY_PREFIX
 
-    let direction = bytes[pos];
+    println!("decode_quad_direction_key {:?}", bytes);
+
+    let direction = Direction::from_byte(bytes[pos]).unwrap();
     pos += 1;
 
     let mut rdr = Cursor::new(&bytes[pos..pos+8]);
@@ -593,7 +614,7 @@ pub fn primitive_key(id: u64) -> Vec<u8> {
 // }
 
 
-
+#[derive(Clone, PartialEq, Debug)]
 pub struct Primitive {
     id: u64,
     refs: u64,
@@ -644,17 +665,20 @@ impl Primitive {
     }
 
     pub fn new_value(v: Value) -> Primitive {
+        let pc = PrimitiveContent::Value(v);
         Primitive {
-            id: 0,
-            content: PrimitiveContent::Value(v),
+            id: pc.calc_hash(),
+            content: pc,
             refs: 0
         }
     }
 
     pub fn new_quad(q: InternalQuad) -> Primitive {
+        let pc = PrimitiveContent::InternalQuad(q);
+
         Primitive {
-            id: 0,
-            content: PrimitiveContent::InternalQuad(q),
+            id: pc.calc_hash(),
+            content: pc,
             refs: 0
         }
     }
@@ -699,8 +723,7 @@ impl Primitive {
     }
 }
 
-
-#[derive(Debug, Hash)]
+#[derive(Clone, PartialEq, Debug, Hash)]
 pub enum PrimitiveContent {
     Value(Value),
     InternalQuad(InternalQuad)
@@ -748,3 +771,134 @@ impl PrimitiveContent {
 }
 
 
+
+#[test]
+fn primitive_key_tests() {
+    assert_eq!(primitive_key(256), vec![0, 0, 0, 0, 0, 0, 0, 1, 0]);
+    assert_eq!(primitive_key(u64::max_value()), vec![0, 255, 255, 255, 255, 255, 255, 255, 255]);
+}
+
+#[test]
+fn primitive_quad_encoding_tests() {
+    let p1 = Primitive::new_quad(InternalQuad {
+        s: 0,
+        p: 1,
+        o: 2,
+        l: 3
+    });
+    let e = p1.encode();
+    let p2 = Primitive::decode(&e).unwrap();
+    assert_eq!(p1, p2);
+
+    let p1 = Primitive::new_quad(InternalQuad {
+        s: 4234664324,
+        p: 22345353643,
+        o: 1686585436346,
+        l: 0
+    });
+    let e = p1.encode();
+    let p2 = Primitive::decode(&e).unwrap();
+    assert_eq!(p1, p2);
+}
+
+
+#[test]
+fn primitive_value_encoding_tests() {
+    let p1 = Primitive::new_value("Foo Bar".into());
+    let e = p1.encode();
+    let p2 = Primitive::decode(&e).unwrap();
+    assert_eq!(p1, p2);
+    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+
+    let p1 = Primitive::new_value(747.into());
+    let e = p1.encode();
+    let p2 = Primitive::decode(&e).unwrap();
+    assert_eq!(p1, p2);
+    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+
+    let p1 = Primitive::new_value("<foo>".into());
+    let e = p1.encode();
+    let p2 = Primitive::decode(&e).unwrap();
+    assert_eq!(p1, p2);
+    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+
+    let p1 = Primitive::new_value(Value::None);
+    let e = p1.encode();
+    let p2 = Primitive::decode(&e).unwrap();
+    assert_eq!(p1, p2);
+    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+
+    let p1 = Primitive::new_value(false.into());
+    let e = p1.encode();
+    let p2 = Primitive::decode(&e).unwrap();
+    assert_eq!(p1, p2);
+    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+}
+
+#[test]
+fn quad_direction_key_tests() {
+    let t1 = (0, Direction::Subject, 0);
+    let b = quad_direction_key(t1.0, &t1.1, t1.2);
+    let t2 = decode_quad_direction_key(&b);
+    assert_eq!(t1, t2);
+
+    let t1 = (123, Direction::Object, 321);
+    let b = quad_direction_key(t1.0, &t1.1, t1.2);
+    let t2 = decode_quad_direction_key(&b);
+    assert_eq!(t1, t2);
+
+    let t1 = (u64::max_value(), Direction::Label, u64::max_value());
+    let b = quad_direction_key(t1.0, &t1.1, t1.2);
+    let t2 = decode_quad_direction_key(&b);
+    assert_eq!(t1, t2);
+}
+
+
+#[test]
+fn internal_rocks_db_tests() {
+    let db = InternalRocksDB::open("gizmo_tests.db").unwrap();
+
+    let mut p1 = Primitive::new_value("<foo>".into());
+
+    let mut p2 = Primitive::new_quad(InternalQuad {
+        s: 4234664324,
+        p: 22345353643,
+        o: 1686585436346,
+        l: 0
+    });
+
+    let mut p3 = Primitive::new_value(747.into());
+
+
+    let id1 = db.add_primitive(&mut p1).unwrap();
+    assert_eq!(id1, p1.id);
+
+    let id2 = db.add_primitive(&mut p2).unwrap();
+    assert_eq!(id2, p2.id);
+
+    let id3 = db.add_primitive(&mut p3).unwrap();
+    assert_eq!(id3, p3.id);
+
+    let p1b = db.get_primitive(id1).unwrap().unwrap();
+    assert_eq!(p1, p1b);
+
+    let p2b = db.get_primitive(id2).unwrap().unwrap();
+    assert_eq!(p2, p2b);
+
+    let p3b = db.get_primitive(id3).unwrap().unwrap();
+    assert_eq!(p3, p3b);
+
+
+    db.remove_primitive(&p1b).unwrap();
+    db.remove_primitive(&p2b).unwrap();
+    db.remove_primitive(&p3b).unwrap();
+
+    let id = db.get_primitive(id1).unwrap();
+    assert!(id.is_none());
+
+    let id = db.get_primitive(id2).unwrap();
+    assert!(id.is_none());
+
+    let id = db.get_primitive(id3).unwrap();
+    assert!(id.is_none());
+}

@@ -159,6 +159,16 @@ impl Direction {
         DIRECTIONS.iter()
     }
 
+    pub fn from_byte(byte: u8) -> Option<Direction> {
+        match byte {
+            1 => Some(Direction::Subject),
+            2 => Some(Direction::Predicate),
+            3 => Some(Direction::Object),
+            4 => Some(Direction::Label),
+            _ => None
+        }
+    }
+
     pub fn to_byte(&self) -> u8 {
         match self {
             Direction::Subject => 1,
