@@ -1,7 +1,8 @@
 use crate::graph::value::Value;
 use crate::graph::refs::{Size, Ref, Namer, Content};
 use crate::graph::iterator::{Shape, Null};
-use crate::graph::quad::{QuadStore, Quad, Direction, Stats, Delta, IgnoreOptions, Procedure};
+use crate::graph::iterator::quad_ids::QuadIds;
+use crate::graph::quad::{QuadStore, InternalQuad, Quad, Direction, Stats, Delta, IgnoreOptions, Procedure};
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -9,7 +10,6 @@ use std::collections::HashMap;
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
-use super::iterator::MemStoreIterator;
 use super::all_iterator::MemStoreAllIterator;
 
 use std::sync::{Arc, RwLock};
@@ -343,7 +343,7 @@ impl QuadStore for MemStore {
             let quad_ids = datastore.index.get(d, &i);
 
             if !quad_ids.is_empty() {
-                return MemStoreIterator::new(Rc::new(quad_ids), d.clone())
+                return QuadIds::new(Rc::new(quad_ids), d.clone())
             }
         } 
             
@@ -554,35 +554,5 @@ impl Primitive {
         }
 
         return false
-    }
-}
-
-#[derive(PartialEq, Hash, Clone, Debug)]
-pub struct InternalQuad {
-    s: u64,
-    p: u64,
-    o: u64,
-    l: u64,
-}
-
-impl Eq for InternalQuad {}
-
-impl InternalQuad {
-    fn dir(&self, dir: &Direction) -> u64 {
-        match dir {
-            Direction::Subject => self.s,
-            Direction::Predicate => self.p,
-            Direction::Object => self.o,
-            Direction::Label => self.l
-        }
-    }
-
-    fn set_dir(&mut self, dir: &Direction, vid: u64) {
-        match dir {
-            Direction::Subject => self.s = vid,
-            Direction::Predicate => self.p = vid,
-            Direction::Object => self.o = vid,
-            Direction::Label => self.l = vid,
-        };
     }
 }

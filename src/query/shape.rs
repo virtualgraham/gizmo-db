@@ -181,10 +181,17 @@ impl Shape for Fixed {
     fn build_iterator(&mut self, _qs: Rc<RefCell<dyn QuadStore>>) -> Rc<RefCell<dyn iterator::Shape>> {
         let it = iterator::fixed::Fixed::new(vec![]);
         for v in &self.0 {
-            if let Content::Quad(_) = v.content {
-                panic!("quad value in fixed iterator")
+            match v.content {
+                Content::Quad(_) => {
+                    panic!("quad value in fixed iterator")
+                },
+                Content::InternalQuad(_) => {
+                    panic!("internal quad value in fixed iterator")
+                },
+                _ => {
+                    it.borrow_mut().add(v.clone());
+                }
             }
-            it.borrow_mut().add(v.clone());
         }
         return it;
     }

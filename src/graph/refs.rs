@@ -1,12 +1,12 @@
 use super::number::Number;
 use super::value::Value;
-use super::quad::{Quad, Direction};
+use super::quad::{Quad, InternalQuad};
 
 
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Size {
-    pub value: i64,
+    pub value: i64, // TODO: shouldnt this be u64?
     pub exact: bool
 }
 
@@ -68,7 +68,8 @@ pub fn pre_fetched(v: Value) -> Ref {
 pub enum Content {
     None,
     Value(Value),
-    Quad(Quad)
+    Quad(Quad),
+    InternalQuad(InternalQuad)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -85,7 +86,8 @@ impl Ref {
         }
     }
 
-    // a Ref with key Value::None is used to refer to an exsisting quad but the direction is unassigned
+    // a Ref with key Value::None or 0 is used to refer to an exsisting quad but the direction is unassigned
+    // TODO: using 0 seems inconsistant, should replace all usage of 0 with None
     // this is often the case with the label direction
     // using this method helps to ensure we are checking and handling this scenerio properly
     pub fn key(&self) -> Option<u64> {

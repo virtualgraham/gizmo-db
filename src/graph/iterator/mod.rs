@@ -12,6 +12,7 @@ pub mod skip;
 pub mod sort;
 pub mod unique;
 pub mod value_filter;
+pub mod quad_ids;
 pub mod iterate;
 
 use std::collections::HashMap;
@@ -107,7 +108,8 @@ pub enum ShapeType<'a> {
     Test,
     Unique,
     ValueFilter,
-    MemStoreIterator
+    QuadIds,
+    StoreIterator
 }
 
 

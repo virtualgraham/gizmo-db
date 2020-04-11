@@ -1,25 +1,27 @@
 use crate::graph::value::Value;
 use crate::graph::refs::{Size, Ref, Namer, Content};
 use crate::graph::iterator::{Shape, Null};
-use crate::graph::quad::{QuadStore, Quad, Direction, Stats, Delta, IgnoreOptions, Procedure};
+use crate::graph::quad::{QuadStore, InternalQuad, Quad, Direction, Stats, Delta, IgnoreOptions, Procedure};
+use crate::graph::iterator::quad_ids::QuadIds;
 
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use rocksdb::{DB, IteratorMode, Options};
+use rocksdb::{DB, IteratorMode};
 
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 
 use std::io::Cursor;
-use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
+use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt, ByteOrder};
 
 use std::collections::BTreeSet;
 
 use std::sync::Arc;
 
+use super::all_iterator::RocksDbAllIterator;
+
 pub struct InternalRocksDB {
-    db: DB
+    pub db: DB
 }
 
 impl InternalRocksDB {
@@ -35,31 +37,81 @@ impl InternalRocksDB {
 
     // Primitives
 
-    fn get_primitive(&self, id: u64) -> Result<Option<Primitive>, String> {
+    fn increment_count(&self, n: i64, key: &[u8; 2]) -> Result<u64, String> {
+        let mut count = self.get_count(key)?;
+
+        if n < 0 {
+            let m = n.abs() as u64;
+            if m > count {
+                println!("Attempted to set quad count to less than 0");
+                count = 0;
+            } else {
+                count -= m;
+            }
+        } else {
+            count += n as u64;
+        }
+        
+        let b = n.to_be_bytes();
+
+        self.db.put(key, b)?;
+
+        Ok(count)
+    }
+
+    pub fn get_count(&self, key: &[u8; 2]) -> Result<u64, String> {
+        match self.db.get(key) {
+            Ok(Some(bytes)) => {
+                Ok(BigEndian::read_u64(&bytes))
+            }
+            Ok(None) => {
+                Ok(0)
+            }
+            _ => return Err("read/write error encountered".to_string())
+        }
+    }
+
+
+
+
+    pub fn get_primitive(&self, id: u64) -> Result<Option<Primitive>, String> {
         let key = primitive_key(id);
 
         match self.db.get(key) {
             Ok(Some(pr)) => Ok(Some(Primitive::decode(&pr)?)),
             Ok(None) => Ok(None),
-            Err(e) => Err("read/write error encountered".to_string())
+            Err(_) => Err("read/write error encountered".to_string())
         }
     }
 
-    fn add_primitive(&self, mut p: Primitive) -> Result<u64, String> {
+    fn add_primitive(&self, p: &mut Primitive) -> Result<u64, String> {
         p.refs = 1;
-        self.db.put(primitive_key(p.id), p.encode());
+        self.db.put(primitive_key(p.id), p.encode())?;
+        match p.content {
+            PrimitiveContent::Value(_) => {
+                self.increment_count(1, &META_DATA_VALUE_COUNT_KEY)?;
+            },
+            PrimitiveContent::InternalQuad(_) => {
+                self.increment_count(1, &META_DATA_QUAD_COUNT_KEY)?;
+            }
+        };
         Ok(p.id)
     }
     
-
-    // Quad Direction Index
-
-    fn remove_primitive(&self, id: u64) -> Result<(), String> {
-        self.db.delete(primitive_key(id))?;
+    fn remove_primitive(&self, p: &Primitive) -> Result<(), String> {
+        self.db.delete(primitive_key(p.id))?;
+        match p.content {
+            PrimitiveContent::Value(_) => {
+                self.increment_count(-1, &META_DATA_VALUE_COUNT_KEY)?;
+            },
+            PrimitiveContent::InternalQuad(_) => {
+                self.increment_count(-1, &META_DATA_QUAD_COUNT_KEY)?;
+            }
+        };
         Ok(())
     }
 
-
+    // Quad Direction Index
 
     fn get_quad_direction(&self, d: &Direction, value_id: &u64) -> BTreeSet<u64> {
         let lower_bound = quad_direction_key(value_id.clone(), d, 0);
@@ -67,11 +119,13 @@ impl InternalRocksDB {
     }
 
     fn add_quad_direction(&self, value_id: u64, direction: &Direction, quad_id: u64) -> Result<(), String> {
+        // TODO: keep a count of value_id: u64, direction: &Direction
         self.db.put(quad_direction_key(value_id, direction, quad_id), [])?;
         Ok(())
     }
 
     fn remove_quad_direction(&self, value_id: u64, direction: &Direction, quad_id: u64) -> Result<(), String> {
+        // TODO: keep a count of value_id: u64, direction: &Direction
         self.db.delete(quad_direction_key(value_id, direction, quad_id))?;
         Ok(())
     }
@@ -87,7 +141,7 @@ impl InternalRocksDB {
 
         let id = v.calc_hash();
         
-        let prim = self.get_primitive(id)?;
+        let prim = self.get_primitive(id)?; // value
 
         
         if prim.is_some() || !add {
@@ -97,13 +151,13 @@ impl InternalRocksDB {
             if prim.is_some() && add {
                 let mut p = prim.unwrap();
                 p.refs += 1;
-                self.db.put(primitive_key(p.id), p.encode());
+                self.db.put(primitive_key(p.id), p.encode())?; // value
             }
             
             return Ok(res)
         }
 
-        self.add_primitive(Primitive::new_value(v.clone()))?;
+        self.add_primitive(&mut Primitive::new_value(v.clone()))?;
 
         Ok(Some(id))
     }
@@ -145,23 +199,21 @@ impl InternalRocksDB {
                 continue
             }
 
-            let mut delete = false;
+            if let Some(mut p) = self.get_primitive(id)? { // value
 
-            if let Some(mut p) = self.get_primitive(id)? {
+                if p.refs == 0 {
+                    return Err("remove of delete node".to_string())
+                } 
 
                 p.refs -= 1;
+                
+                if p.refs == 0 {
 
-                if p.refs < 0 {
-
-                    panic!("remove of delete node");
-
-                } else if p.refs == 0 {
-
-                    self.remove_primitive(id)?;
+                    self.remove_primitive(&p)?;
 
                 } else {
 
-                    if let Err(_) = self.db.put(primitive_key(id), p.encode()) {
+                    if let Err(_) = self.db.put(primitive_key(id), p.encode()) { // value
                         return Err("read/write error".to_string())
                     }
 
@@ -184,14 +236,14 @@ impl InternalRocksDB {
         let mut quad:Option<InternalQuad> = None;
  
         if let Some(p) = self.get_primitive(id)? {
-            if let PrimitiveContent::Quad(q) = p.content {
+            if let PrimitiveContent::InternalQuad(q) = &p.content {
                 quad = Some(q.clone());
             }
+
+            self.remove_primitive(&p)?;
         } else {
             return Ok(false)
         }
-        
-        self.remove_primitive(id)?;
         
         if let Some(q) = quad {
             for d in Direction::iterator() {
@@ -223,12 +275,12 @@ impl InternalRocksDB {
         let p = self.resolve_quad_default(&q, true)?;
 
         // add value primitive
-        let pr = Primitive::new_quad(p.clone());
-        let id = self.add_primitive(pr)?;
+        let mut pr = Primitive::new_quad(p.clone());
+        let id = self.add_primitive(&mut pr)?;
 
         // add to index
         for d in Direction::iterator() {
-            self.add_quad_direction(p.dir(d), d, id);
+            self.add_quad_direction(p.dir(d), d, id)?;
         }
 
         return Ok(id);
@@ -256,7 +308,7 @@ impl InternalRocksDB {
         match key {
             Some(p) => {
                 match p.content {
-                    PrimitiveContent::Quad(q) => Ok(Some(q)),
+                    PrimitiveContent::InternalQuad(q) => Ok(Some(q)),
                     _ => Ok(None)
                 }
             },
@@ -327,62 +379,170 @@ impl Namer for RocksDB {
 
 impl QuadStore for RocksDB {
     fn quad(&self, r: &Ref) -> Option<Quad> {
-        let quad_res = self.store.internal_quad(r);
-        if let Ok(quad) = quad_res {
-            match quad {
-                Some(q) => {
-                    if let Ok(dirs) = self.store.lookup_quad_dirs(q) {
-                        return Some(dirs)
-                    } else {
+
+        let internal_quad:Option<InternalQuad> = match &r.content {
+            Content::Quad(q) => {
+                return Some(q.clone())
+            },
+            Content::InternalQuad(iq) => {
+                Some(iq.clone())
+            }
+            _ => {
+                match self.store.internal_quad(r) {
+                    Ok(iq) => {
+                        iq
+                    },
+                    Err(_) => {
                         // TODO: return Err
                         return None
-                    }
+                    } 
                 }
-                None => None
             }
-        } else {
-            // TODO: return Err
-            return None
+        };
+
+        match internal_quad {
+            Some(q) => {
+                if let Ok(dirs) = self.store.lookup_quad_dirs(q) {
+                    return Some(dirs)
+                } else {
+                    // TODO: return Err
+                    return None
+                }
+            }
+            None => None
         }
     }
 
     fn quad_iterator(&self, d: &Direction, r: &Ref) -> Rc<RefCell<dyn Shape>> {
+        if let Some(i) = r.key() {
 
+            let quad_ids = self.store.get_quad_direction(d, &i);
+
+            if !quad_ids.is_empty() {
+                return QuadIds::new(Rc::new(quad_ids), d.clone())
+            }
+        } 
+            
+        Null::new()
     }
 
     fn quad_iterator_size(&self, d: &Direction, r: &Ref) -> Result<Size, String> {
+        if let Some(i) = r.key() {
 
+            let quad_ids = self.store.get_quad_direction(d, &i);
+
+            if !quad_ids.is_empty() {
+                return Ok(Size{value: quad_ids.len() as i64, exact: true})
+            }
+        } 
+            
+        return Ok(Size{value: 0, exact: true})
     }
 
     fn quad_direction(&self, r: &Ref, d: &Direction) -> Option<Ref> {
+        let quad = match self.store.internal_quad(r) {
+            Ok(q) => q,
+            Err(_) => {
+                return None
+                // TODO: return Result<Option>>
+            }
+        };
 
+        match quad {
+            Some(q) => {
+                let id = q.dir(d);
+                if id == 0 {
+                    // The quad exsists, but the value is none
+                    return Some(Ref::none())
+                }
+                return Some(Ref {
+                    k: Some(id),
+                    content: Content::None
+                })
+            }
+            // the quad does not exsist
+            None => None
+        }
     }
 
-    fn stats(&self, exact: bool) -> Result<Stats, String> {
+    fn stats(&self, _exact: bool) -> Result<Stats, String> {
+        let quad_count = self.store.get_count(&META_DATA_QUAD_COUNT_KEY)?;
+        let value_count = self.store.get_count(&META_DATA_VALUE_COUNT_KEY)?;
 
+        Ok(Stats {
+            nodes: Size {
+                value: value_count as i64,
+                exact: true
+            },
+            quads: Size {
+                value: quad_count as i64,
+                exact: true
+            }
+        })
     }
     
     fn apply_deltas(&mut self, deltas: Vec<Delta>, ignore_opts: &IgnoreOptions) -> Result<(), String> {
+        if !ignore_opts.ignore_dup || !ignore_opts.ignore_missing {
+            for d in &deltas {
+                match d.action {
+                    Procedure::Add => {
+                        if !ignore_opts.ignore_dup {
+                            if let Some(_) = self.store.find_quad(&d.quad)? {
+                                return Err("ErrQuadExists".into())
+                            }
+                        }
+                    },
+                    Procedure::Delete => {
+                        if !ignore_opts.ignore_missing {
+                            if let Some(_) = self.store.find_quad(&d.quad)? {
+                            } else {
+                                return Err("ErrQuadNotExist".into())
+                            }
+                        }
+                    },
+                }
+            }
+        }
 
+        for d in &deltas {
+            match &d.action {
+                Procedure::Add => {
+                    self.store.add_quad(d.quad.clone())?;
+                },
+                Procedure::Delete => {
+                   if let Some(id) = self.store.find_quad(&d.quad)? {
+                    self.store.delete(id)?;
+                   }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     fn nodes_all_iterator(&self) -> Rc<RefCell<dyn Shape>> {
-
+        RocksDbAllIterator::new(self.store.clone(), true)
+  
     }
 
     fn quads_all_iterator(&self) -> Rc<RefCell<dyn Shape>> {
-
+        RocksDbAllIterator::new(self.store.clone(), false)
     }
 
     fn close(&self) -> Option<String> {
-        //
+        // TODO: how to close the RocksDB, destroy()?
+        return None
     }
 }
 
+// TODO: eliminate the use of cursor with BigEndian::read_u64(&buf)
 
+pub const QUAD_DIRECTION_KEY_PREFIX:u8 = 1u8;
+pub const PRIMITIVE_KEY_PREFIX:u8 = 0u8; // should always be 0 so when can interate primitives using IteratorMode::Start
 
-const QUAD_DIRECTION_KEY_PREFIX:u8 = 1u8;
-const PRIMITIVE_KEY_PREFIX:u8 = 0u8;
+pub const META_DATA_KEY_PREFIX:u8 = 126u8;
+pub const META_DATA_QUAD_COUNT_KEY:[u8; 2] = [META_DATA_KEY_PREFIX, 0u8];
+pub const META_DATA_VALUE_COUNT_KEY:[u8; 2] = [META_DATA_KEY_PREFIX, 1u8];
 
 fn quad_direction_key(value_id: u64, direction: &Direction, quad_id: u64) -> Vec<u8> {
     let mut v:Vec<u8> = Vec::new();
@@ -414,7 +574,7 @@ fn decode_quad_direction_key(bytes: Box<[u8]>) -> (u64, u8, u64) {
 }
 
 
-fn primitive_key(id: u64) -> Vec<u8> {
+pub fn primitive_key(id: u64) -> Vec<u8> {
     let mut v:Vec<u8> = Vec::new();
 
     v.push(PRIMITIVE_KEY_PREFIX);
@@ -423,28 +583,52 @@ fn primitive_key(id: u64) -> Vec<u8> {
     v
 }
 
-fn primitive_key_from_value(id: u64) -> Vec<u8> {
-    let mut v:Vec<u8> = Vec::new();
+// fn primitive_key_from_value(id: u64) -> Vec<u8> {
+//     let mut v:Vec<u8> = Vec::new();
 
-    v.extend_from_slice("prim".as_bytes());
-    v.write_u64::<BigEndian>(id).unwrap();
+//     v.extend_from_slice("prim".as_bytes());
+//     v.write_u64::<BigEndian>(id).unwrap();
 
-    v
-}
+//     v
+// }
 
 
 
-struct Primitive {
+pub struct Primitive {
     id: u64,
     refs: u64,
-    content: PrimitiveContent
+    pub content: PrimitiveContent
 }
 
 
 impl Primitive {
 
+    pub fn to_ref(&self, nodes: bool) -> Option<Ref> {
+
+        match &self.content {
+            PrimitiveContent::Value(v) => {
+                if nodes {
+                    return Some(Ref {
+                        k: Some(self.id),
+                        content: Content::Value(v.clone())
+                    });
+                }
+            },
+            PrimitiveContent::InternalQuad(q) => {
+                if !nodes {
+                    return Some(Ref {
+                        k: Some(self.id),
+                        content: Content::InternalQuad(q.clone())
+                    });
+                }
+            }
+        }
+
+        return None
+    }
+
     pub fn is_quad(&self) -> bool {
-        if let PrimitiveContent::Quad(_) = self.content {
+        if let PrimitiveContent::InternalQuad(_) = self.content {
             return true
         }
 
@@ -470,7 +654,7 @@ impl Primitive {
     pub fn new_quad(q: InternalQuad) -> Primitive {
         Primitive {
             id: 0,
-            content: PrimitiveContent::Quad(q),
+            content: PrimitiveContent::InternalQuad(q),
             refs: 0
         }
     }
@@ -519,7 +703,7 @@ impl Primitive {
 #[derive(Debug, Hash)]
 pub enum PrimitiveContent {
     Value(Value),
-    Quad(InternalQuad)
+    InternalQuad(InternalQuad)
 }
 
 
@@ -533,7 +717,7 @@ impl PrimitiveContent {
             PrimitiveContent::Value(v) => {
                 return v.calc_hash()
             },
-            PrimitiveContent::Quad(q) => {
+            PrimitiveContent::InternalQuad(q) => {
                 return q.calc_hash()
             },
         }
@@ -545,7 +729,7 @@ impl PrimitiveContent {
                 buff.push(PRIMITIVE_CONTENT_VALUE_PREFIX);
                 v.encode(buff);
             },
-            PrimitiveContent::Quad(q) => {
+            PrimitiveContent::InternalQuad(q) => {
                 buff.push(PRIMITIVE_CONTENT_QUAD_PREFIX);
                 q.encode(buff);
             },
@@ -556,7 +740,7 @@ impl PrimitiveContent {
         if bytes[0] == PRIMITIVE_CONTENT_VALUE_PREFIX {
             return Ok(PrimitiveContent::Value(Value::decode(&bytes[1..])?));
         } else if bytes[0] == PRIMITIVE_CONTENT_QUAD_PREFIX {
-            return Ok(PrimitiveContent::Quad(InternalQuad::decode(&bytes[1..])?));
+            return Ok(PrimitiveContent::InternalQuad(InternalQuad::decode(&bytes[1..])?));
         } 
             
         Err("Cannot not decode PrimitiveContent".to_string())
@@ -564,76 +748,3 @@ impl PrimitiveContent {
 }
 
 
-
-#[derive(PartialEq, Hash, Clone, Debug)]
-pub struct InternalQuad {
-    s: u64,
-    p: u64,
-    o: u64,
-    l: u64,
-}
-
-impl Eq for InternalQuad {}
-
-impl InternalQuad {
-
-    fn calc_hash(&self) -> u64 {
-        let mut s = DefaultHasher::new();
-        self.hash(&mut s);
-        s.finish()
-    }
-
-    fn encode(&self, v: &mut Vec<u8>){
-        v.write_u64::<BigEndian>(self.s).unwrap();
-        v.write_u64::<BigEndian>(self.p).unwrap();
-        v.write_u64::<BigEndian>(self.o).unwrap();
-        v.write_u64::<BigEndian>(self.l).unwrap();
-    }
-
-
-    pub fn decode(bytes: &[u8]) -> Result<InternalQuad, String> {
-        let mut pos:usize = 0;
-
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let s = rdr.read_u64::<BigEndian>().unwrap();
-        
-        pos += 8;
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let p = rdr.read_u64::<BigEndian>().unwrap();
-        
-        pos += 8;
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let o = rdr.read_u64::<BigEndian>().unwrap();
-        
-        pos += 8;
-        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
-        let l = rdr.read_u64::<BigEndian>().unwrap();
-
-        Ok(InternalQuad {
-            s,
-            p,
-            o,
-            l
-        })
-    }
-
-
-    fn dir(&self, dir: &Direction) -> u64 {
-        match dir {
-            Direction::Subject => self.s,
-            Direction::Predicate => self.p,
-            Direction::Object => self.o,
-            Direction::Label => self.l
-        }
-    }
-
-
-    fn set_dir(&mut self, dir: &Direction, vid: u64) {
-        match dir {
-            Direction::Subject => self.s = vid,
-            Direction::Predicate => self.p = vid,
-            Direction::Object => self.o = vid,
-            Direction::Label => self.l = vid,
-        };
-    }
-}

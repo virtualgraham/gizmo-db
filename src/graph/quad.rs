@@ -190,7 +190,10 @@ pub enum Procedure {
 pub trait QuadStore : Namer {
     fn quad(&self, r: &Ref) -> Option<Quad>;
     fn quad_iterator(&self, d: &Direction, r: &Ref) -> Rc<RefCell<dyn Shape>>;
+
+    // TODO: this method is never used, remove?
     fn quad_iterator_size(&self, d: &Direction, r: &Ref) -> Result<Size, String>;
+
     fn quad_direction(&self, r: &Ref, d: &Direction) -> Option<Ref>;
     fn stats(&self, exact: bool) -> Result<Stats, String>;
     
@@ -251,3 +254,77 @@ pub struct Stats {
     pub quads: Size
 }
 
+
+
+#[derive(PartialEq, Hash, Clone, Debug)]
+pub struct InternalQuad {
+    pub s: u64,
+    pub p: u64,
+    pub o: u64,
+    pub l: u64,
+}
+
+impl Eq for InternalQuad {}
+
+impl InternalQuad {
+
+    pub fn calc_hash(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
+    }
+
+    pub fn encode(&self, v: &mut Vec<u8>){
+        v.write_u64::<BigEndian>(self.s).unwrap();
+        v.write_u64::<BigEndian>(self.p).unwrap();
+        v.write_u64::<BigEndian>(self.o).unwrap();
+        v.write_u64::<BigEndian>(self.l).unwrap();
+    }
+
+
+    pub fn decode(bytes: &[u8]) -> Result<InternalQuad, String> {
+        let mut pos:usize = 0;
+
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let s = rdr.read_u64::<BigEndian>().unwrap();
+        
+        pos += 8;
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let p = rdr.read_u64::<BigEndian>().unwrap();
+        
+        pos += 8;
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let o = rdr.read_u64::<BigEndian>().unwrap();
+        
+        pos += 8;
+        let mut rdr = Cursor::new(&bytes[pos..pos+8]);
+        let l = rdr.read_u64::<BigEndian>().unwrap();
+
+        Ok(InternalQuad {
+            s,
+            p,
+            o,
+            l
+        })
+    }
+
+
+    pub fn dir(&self, dir: &Direction) -> u64 {
+        match dir {
+            Direction::Subject => self.s,
+            Direction::Predicate => self.p,
+            Direction::Object => self.o,
+            Direction::Label => self.l
+        }
+    }
+
+
+    pub fn set_dir(&mut self, dir: &Direction, vid: u64) {
+        match dir {
+            Direction::Subject => self.s = vid,
+            Direction::Predicate => self.p = vid,
+            Direction::Object => self.o = vid,
+            Direction::Label => self.l = vid,
+        };
+    }
+}

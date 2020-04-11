@@ -60,7 +60,7 @@ impl Shape for MemStoreAllIterator {
     }
 
     fn shape_type(&mut self) -> ShapeType {
-        ShapeType::MemStoreIterator
+        ShapeType::StoreIterator
     }
 
 }
