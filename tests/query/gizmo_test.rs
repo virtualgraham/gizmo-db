@@ -67,21 +67,21 @@ fn simple_query_tests() {
     // use .getLimit
     ///////////////////////
 
-    // let mut r:Vec<String> = g
-    //     .v(None)
-    //     .iter_values().take(5)
-    //     .map(|v| v.to_string()).collect();
-    // let mut f:Vec<String> = vec![
-    //     "<alice>".into(),
-    //     "<bob>".into(),
-    //     "<follows>".into(),
-    //     "<fred>".into(),
-    //     "<status>".into()
-    // ];
-    // r.sort();
-    // f.sort();
+    let mut r:Vec<String> = g
+        .v(None)
+        .iter_values().take(5)
+        .map(|v| v.to_string()).collect();
+    let mut f:Vec<String> = vec![
+        "<alice>".into(),
+        "<bob>".into(),
+        "<follows>".into(),
+        "<fred>".into(),
+        "<status>".into()
+    ];
+    r.sort();
+    f.sort();
 
-    // assert_eq!(r, f);
+    assert_eq!(r, f);
 
 
     /////////////////////////

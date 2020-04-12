@@ -37,46 +37,17 @@ impl InternalRocksDB {
 
     // Primitives
 
-    fn increment_count(&self, n: i64, key: &[u8; 2]) -> Result<u64, String> {
-
-        let mut count = self.get_count(key)?;
-
-        if n < 0 {
-            let m = n.abs() as u64;
-            if m > count {
-                return Err("Attempted to set quad count to less than 0".to_string());
-            } else {
-                count -= m;
-            }
-        } else {
-            if n as u64 > u64::max_value() - count  {
-                return Err("quad count is invalid u64::max_value()".to_string());
-            } else {
-                count += n as u64;
-            }
-        }
-        
-        let b = count.to_be_bytes();
-
-        self.db.put(key, b)?;
-
-        Ok(count)
-    }
-
-    pub fn get_count(&self, key: &[u8; 2]) -> Result<u64, String> {
-        match self.db.get(key) {
+    pub fn get_count(&self) -> Result<PrimitiveCount, String> {
+        match self.db.get(&[PRIMITIVE_COUNT_KEY]) {
             Ok(Some(bytes)) => {
-                Ok(BigEndian::read_u64(&bytes))
+                Ok(PrimitiveCount::decode(&bytes))
             }
             Ok(None) => {
-                Ok(0)
+                Ok(PrimitiveCount::zero())
             }
             _ => return Err("read/write error encountered".to_string())
         }
     }
-
-
-
 
     pub fn get_primitive(&self, id: u64) -> Result<Option<Primitive>, String> {
         let key = primitive_key(id);
@@ -88,33 +59,45 @@ impl InternalRocksDB {
         }
     }
 
-    // Only call this method after you have checked that the primitive does not yet exsist
+    // Only call this method after you have checked that the primitive does not yet exist
     fn add_primitive(&self, p: &mut Primitive) -> Result<u64, String> {
-        p.refs = 1;
-        self.db.put(primitive_key(p.id), p.encode())?;
-
+        let mut count = self.get_count()?;
         match p.content {
             PrimitiveContent::Value(_) => {
-                self.increment_count(1, &META_DATA_VALUE_COUNT_KEY)?;
+                count.increment_values(1);
             },
             PrimitiveContent::InternalQuad(_) => {
-                self.increment_count(1, &META_DATA_QUAD_COUNT_KEY)?;
+                count.increment_quads(1);
             }
         };
+
+        p.id = count.total();
+        p.refs = 1;
+
+        self.db.put(primitive_key(p.id), p.encode())?;
+
+        self.add_id_hash(p.calc_hash(), p.id)?;
+
+        self.db.put([PRIMITIVE_COUNT_KEY], count.encode())?;
+
         Ok(p.id)
     }
     
     fn remove_primitive(&self, p: &Primitive) -> Result<(), String> {
         self.db.delete(primitive_key(p.id))?;
+        self.remove_id_hash(p.calc_hash())?;
 
+        let mut count = self.get_count()?;
         match p.content {
             PrimitiveContent::Value(_) => {
-                self.increment_count(-1, &META_DATA_VALUE_COUNT_KEY)?;
+                count.increment_values(-1);
             },
             PrimitiveContent::InternalQuad(_) => {
-                self.increment_count(-1, &META_DATA_QUAD_COUNT_KEY)?;
+                count.increment_quads(-1);
             }
         };
+        self.db.put([PRIMITIVE_COUNT_KEY], count.encode())?;
+
         Ok(())
     }
 
@@ -135,17 +118,38 @@ impl InternalRocksDB {
     }
 
     fn add_quad_direction(&self, value_id: u64, direction: &Direction, quad_id: u64) -> Result<(), String> {
-        // TODO: keep a count of value_id: u64, direction: &Direction
+        // TODO: keep a count of value_id: u64, direction: &Direction. but the only funtion that uses it is never used
         self.db.put(quad_direction_key(value_id, direction, quad_id), [])?;
         Ok(())
     }
 
     fn remove_quad_direction(&self, value_id: u64, direction: &Direction, quad_id: u64) -> Result<(), String> {
-        // TODO: keep a count of value_id: u64, direction: &Direction
+        // TODO: keep a count of value_id: u64, direction: &Direction. but the only funtion that uses it is never used
         self.db.delete(quad_direction_key(value_id, direction, quad_id))?;
         Ok(())
     }
 
+    // Hash Index
+
+    fn get_id_hash(&self, hash: u64) -> Result<Option<u64>, String> {
+        let key = id_hash_key(hash);
+
+        match self.db.get(key) {
+            Ok(Some(bytes)) => Ok(Some(BigEndian::read_u64(&bytes))),
+            Ok(None) => Ok(None),
+            Err(_) => Err("read/write error encountered".to_string())
+        }
+    }
+
+    fn add_id_hash(&self, hash: u64, id: u64) -> Result<(), String> {
+        self.db.put(id_hash_key(hash), id.to_be_bytes())?;
+        Ok(())
+    }
+
+    fn remove_id_hash(&self, hash: u64) -> Result<(), String> {
+        self.db.delete(id_hash_key(hash))?;
+        Ok(())
+    }
 
     ///////////////////////
 
@@ -155,10 +159,13 @@ impl InternalRocksDB {
             return Ok(None)
         }
 
-        let id = v.calc_hash();
+        let hash = v.calc_hash();
         
-        let prim = self.get_primitive(id)?; // value
-
+        let prim = if let Some(id) = self.get_id_hash(hash)?{
+            self.get_primitive(id)?
+        } else {
+            None
+        };
         
         if prim.is_some() || !add {
             // if the value exsists and we are adding it, increment refs
@@ -173,7 +180,7 @@ impl InternalRocksDB {
             return Ok(res)
         }
 
-        self.add_primitive(&mut Primitive::new_value(v.clone()))?;
+        let id = self.add_primitive(&mut Primitive::new_value(v.clone()))?;
 
         Ok(Some(id))
     }
@@ -202,7 +209,7 @@ impl InternalRocksDB {
     fn find_quad(&self, q: &Quad) -> Result<Option<u64>, String> {
         let quad = self.resolve_quad(q, false)?;
         if let Some(q) = quad {
-            return Ok(Some(q.calc_hash()))
+            return self.get_id_hash(q.calc_hash())
         }
         Ok(None)
     }
@@ -277,14 +284,17 @@ impl InternalRocksDB {
         let p = self.resolve_quad_default(&q, false)?;
 
         // get quad id
-        let id = p.calc_hash();
+        let hash = p.calc_hash();
 
-
-        let p = self.get_primitive(id)?;
+        let prim = if let Some(id) = self.get_id_hash(hash)?{
+            self.get_primitive(id)?
+        } else {
+            None
+        };
 
         // if prim already exsits
-        if p.is_some() {
-            return Ok(id)
+        if let Some(p) = prim {
+            return Ok(p.id)
         }
 
         // get value_ids for each direction, this time inserting the values as neccecery
@@ -370,11 +380,17 @@ impl Namer for RocksDB {
         if let Value::None = v {
             return None
         }
-        let id = v.calc_hash();
-        Some(Ref {
-            k: Some(id),
-            content: Content::Value(v.clone())
-        })
+
+        let hash = v.calc_hash();
+
+        if let Ok(Some(id)) = self.store.get_id_hash(hash) { // TODO: this method should return Result<Option>
+            Some(Ref {
+                k: Some(id),
+                content: Content::Value(v.clone())
+            })
+        } else {
+            None
+        }
     }
  
     fn name_of(&self, key: &Ref) -> Option<Value> {
@@ -485,16 +501,15 @@ impl QuadStore for RocksDB {
     }
 
     fn stats(&self, _exact: bool) -> Result<Stats, String> {
-        let quad_count = self.store.get_count(&META_DATA_QUAD_COUNT_KEY)?;
-        let value_count = self.store.get_count(&META_DATA_VALUE_COUNT_KEY)?;
+        let count = self.store.get_count()?;
 
         Ok(Stats {
             nodes: Size {
-                value: value_count as i64,
+                value: count.values as i64,
                 exact: true
             },
             quads: Size {
-                value: quad_count as i64,
+                value: count.quads as i64,
                 exact: true
             }
         })
@@ -554,14 +569,94 @@ impl QuadStore for RocksDB {
     }
 }
 
+pub struct PrimitiveCount {
+    values: u64,
+    quads: u64
+}
+
+impl PrimitiveCount {
+    fn zero() -> PrimitiveCount {
+        PrimitiveCount {
+            values: 0,
+            quads: 0
+        }
+    }
+
+    fn decode(bytes: &[u8]) -> PrimitiveCount {
+        let values = BigEndian::read_u64(&bytes[0..8]);
+        let quads = BigEndian::read_u64(&bytes[8..16]);
+
+        PrimitiveCount {
+            values,
+            quads
+        }
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        let mut v:Vec<u8> = Vec::new();
+
+        v.write_u64::<BigEndian>(self.values).unwrap();
+        v.write_u64::<BigEndian>(self.quads).unwrap();
+    
+        v
+    }
+
+    pub fn total(&self) -> u64 {
+        return self.values + self.quads
+    }
+
+    fn increment_quads(&mut self, n: i64) {
+        if n < 0 {
+            let m = n.abs() as u64;
+            if m > self.quads {
+                // return Err("Attempted to set quad count to less than 0".to_string());
+            } else {
+                self.quads -= m;
+            }
+        } else {
+            if n as u64 > u64::max_value() - self.quads  {
+                // return Err("quad count is invalid u64::max_value()".to_string());
+            } else {
+                self.quads += n as u64;
+            }
+        }
+    }
+
+    fn increment_values(&mut self, n: i64) {
+        if n < 0 {
+            let m = n.abs() as u64;
+            if m > self.values {
+                // return Err("Attempted to set quad count to less than 0".to_string());
+            } else {
+                self.values -= m;
+            }
+        } else {
+            if n as u64 > u64::max_value() - self.values  {
+                // return Err("quad count is invalid u64::max_value()".to_string());
+            } else {
+                self.values += n as u64;
+            }
+        }
+    }
+}
+
 // TODO: eliminate the use of cursor with BigEndian::read_u64(&buf)
 
-pub const QUAD_DIRECTION_KEY_PREFIX:u8 = 1u8;
+pub const QUAD_DIRECTION_KEY_PREFIX:u8 = 2u8;
+pub const ID_HASH_INDEX_PREFIX:u8 = 1u8;
 pub const PRIMITIVE_KEY_PREFIX:u8 = 0u8; // should always be 0 so when can interate primitives using IteratorMode::Start
+pub const PRIMITIVE_COUNT_KEY:u8 = 255;
 
-pub const META_DATA_KEY_PREFIX:u8 = 126u8;
-pub const META_DATA_QUAD_COUNT_KEY:[u8; 2] = [META_DATA_KEY_PREFIX, 0u8];
-pub const META_DATA_VALUE_COUNT_KEY:[u8; 2] = [META_DATA_KEY_PREFIX, 1u8];
+
+fn id_hash_key(hash: u64) -> Vec<u8> {
+    let mut v:Vec<u8> = Vec::new();
+
+    v.push(ID_HASH_INDEX_PREFIX);
+    v.write_u64::<BigEndian>(hash).unwrap();
+
+    v
+}
+
 
 fn quad_direction_key(value_id: u64, direction: &Direction, quad_id: u64) -> Vec<u8> {
     let mut v:Vec<u8> = Vec::new();
@@ -577,8 +672,6 @@ fn quad_direction_key(value_id: u64, direction: &Direction, quad_id: u64) -> Vec
 fn decode_quad_direction_key(bytes: &[u8]) -> (u64, Direction, u64) {
 
     let mut pos:usize = 1; // ignore QUAD_DIRECTION_KEY_PREFIX
-
-    println!("decode_quad_direction_key {:?}", bytes);
 
     let direction = Direction::from_byte(bytes[pos]).unwrap();
     pos += 1;
@@ -624,6 +717,17 @@ pub struct Primitive {
 
 impl Primitive {
 
+    fn calc_hash(&self) -> u64 {
+        match &self.content {
+            PrimitiveContent::Value(v) => {
+                return v.calc_hash()
+            },
+            PrimitiveContent::InternalQuad(q) => {
+                return q.calc_hash()
+            },
+        }
+    }
+
     pub fn to_ref(&self, nodes: bool) -> Option<Ref> {
 
         match &self.content {
@@ -667,7 +771,7 @@ impl Primitive {
     pub fn new_value(v: Value) -> Primitive {
         let pc = PrimitiveContent::Value(v);
         Primitive {
-            id: pc.calc_hash(),
+            id: 0,
             content: pc,
             refs: 0
         }
@@ -677,7 +781,7 @@ impl Primitive {
         let pc = PrimitiveContent::InternalQuad(q);
 
         Primitive {
-            id: pc.calc_hash(),
+            id: 0,
             content: pc,
             refs: 0
         }
@@ -685,7 +789,7 @@ impl Primitive {
 
     fn new(content: PrimitiveContent) -> Primitive {
         Primitive {
-            id: content.calc_hash(),
+            id: 0,
             refs: 0,
             content
         }
@@ -735,16 +839,7 @@ const PRIMITIVE_CONTENT_QUAD_PREFIX:u8 = 1u8;
 
 
 impl PrimitiveContent {
-    fn calc_hash(&self) -> u64 {
-        match self {
-            PrimitiveContent::Value(v) => {
-                return v.calc_hash()
-            },
-            PrimitiveContent::InternalQuad(q) => {
-                return q.calc_hash()
-            },
-        }
-    }
+
 
     fn encode(&self, buff: &mut Vec<u8>){
         match self {
@@ -808,31 +903,31 @@ fn primitive_value_encoding_tests() {
     let e = p1.encode();
     let p2 = Primitive::decode(&e).unwrap();
     assert_eq!(p1, p2);
-    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+    assert_eq!(p1.calc_hash(), p2.calc_hash());
 
     let p1 = Primitive::new_value(747.into());
     let e = p1.encode();
     let p2 = Primitive::decode(&e).unwrap();
     assert_eq!(p1, p2);
-    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+    assert_eq!(p1.calc_hash(), p2.calc_hash());
 
     let p1 = Primitive::new_value("<foo>".into());
     let e = p1.encode();
     let p2 = Primitive::decode(&e).unwrap();
     assert_eq!(p1, p2);
-    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+    assert_eq!(p1.calc_hash(), p2.calc_hash());
 
     let p1 = Primitive::new_value(Value::None);
     let e = p1.encode();
     let p2 = Primitive::decode(&e).unwrap();
     assert_eq!(p1, p2);
-    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+    assert_eq!(p1.calc_hash(), p2.calc_hash());
 
     let p1 = Primitive::new_value(false.into());
     let e = p1.encode();
     let p2 = Primitive::decode(&e).unwrap();
     assert_eq!(p1, p2);
-    assert_eq!(p1.content.calc_hash(), p2.content.calc_hash());
+    assert_eq!(p1.calc_hash(), p2.calc_hash());
 }
 
 #[test]

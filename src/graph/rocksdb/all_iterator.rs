@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use rocksdb::IteratorMode;
 
-use super::quadstore::{InternalRocksDB, Primitive, primitive_key, META_DATA_QUAD_COUNT_KEY, META_DATA_VALUE_COUNT_KEY, PRIMITIVE_KEY_PREFIX};
+use super::quadstore::{InternalRocksDB, Primitive, primitive_key, PRIMITIVE_KEY_PREFIX};
 
 use std::sync::Arc;
 
@@ -38,14 +38,13 @@ impl Shape for RocksDbAllIterator {
     }
 
     fn stats(&mut self) -> Result<Costs, String> {
-        let quad_count = self.db.get_count(&META_DATA_QUAD_COUNT_KEY)?;
-        let value_count = self.db.get_count(&META_DATA_VALUE_COUNT_KEY)?;
+        let count = self.db.get_count()?;
 
         Ok(Costs {
             contains_cost: 1,
             next_cost: 1,
             size: Size {
-                value: (quad_count + value_count) as i64,
+                value: count.total() as i64,
                 exact: true
             }
         })
