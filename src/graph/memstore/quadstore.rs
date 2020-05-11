@@ -20,7 +20,7 @@ pub struct InternalMemStore {
     vals: HashMap<Value, u64>, // value to value_id
     quads: HashMap<InternalQuad, u64>, // quad to quad_id
     prim: BTreeMap<u64, Primitive>, // value_id or quad_id to value or quad
-    index: QuadDirectionIndex, // value_id and direction to quad id
+    index: QuadDirectionIndex, // set of value_id, direction & quad_id
     last: u64, // keeps track of ids for values and quads
     horizon: u64 // keeps track of ids for transactions
 }

@@ -1,21 +1,23 @@
 [package]
 name = "gizmo-db"
 description = "An embedded graph database with a powerful query engine. "
-version = "0.0.0"
+version = "0.1.0"
 categories = ["wasm"]
 readme = "README.md"
 edition = "2018"
 
 [features]
 default = ["regex", "standalone"]
-standalone = ["rocksdb"]
+standalone = ["rocksdb", "flate2"]
 
 [dependencies]
 ordered-float = "1.0"
 wildmatch = "1.0.6"
 byteorder = "1.3.4"
+# async-trait = "0.1.30"
 rocksdb = { version = "0.13.0", optional = true }
 regex = { version = "1.3", optional = true }
+flate2 = { version = "1.0", optional = true }
 
 
 [dev-dependencies]

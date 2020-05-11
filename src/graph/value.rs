@@ -37,6 +37,21 @@ impl Value {
         None
     }
 
+    fn from_rdf_string<S: Into<String>>(s: S) -> Value {
+        let s = s.into();
+        if s.is_empty() {
+            return Value::String(s)
+        } else if s.starts_with('"') && s.ends_with('"') {
+            let v = &s[1..s.len()-1];
+            Value::String(v.to_string())
+        } else if s.starts_with('<') && s.ends_with('>') {
+            let v = &s[1..s.len()-1];
+            Value::IRI(v.to_string())
+        } else {
+            Value::String(s)
+        }
+    }
+
     fn from_string<S: Into<String>>(s: S) -> Value {
         let s = s.into();
         if s.is_empty() {
